@@ -1,0 +1,104 @@
+/* src/components/TimeRangeModal.css */
+ion-modal.time-range-modal {
+    --border-radius: 20px 20px 0 0;
+    --box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.time-range-modal ion-toolbar {
+    --background: transparent;
+}
+
+.time-range-modal h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.time-range-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.time-range-option {
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid var(--border-color, #eee);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.time-range-option:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.time-range-option.selected {
+    background-color: #6366f1;
+    color: white;
+    border-color: #6366f1;
+}
+
+.modal-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.cancel-btn {
+    background-color: transparent;
+    color: var(--text-main, #000);
+}
+
+.apply-btn {
+    background-color: #6366f1;
+    color: white;
+}
+
+.apply-btn:disabled {
+    background-color: #4f46e5;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Custom Range Form */
+.custom-range-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.datetime-inputs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.datetime-inputs input {
+    background-color: var(--input-bg, #f0f0f0);
+    color: var(--text-main, #000);
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    width: 100%;
+}

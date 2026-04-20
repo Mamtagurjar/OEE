@@ -1,0 +1,138 @@
+/* src/components/EnergyConsumption.css */
+.energy-page-wrapper {
+    background-color: #f8fafc;
+    color: #1f2937;
+    padding: 1.5rem;
+    min-height: 100vh;
+}
+
+.energy-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.energy-title-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.time-range-button {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background-color: #ffffff;
+    color: #4f46e5;
+    border: 1px solid #e0e7ff;
+    padding: 0.6rem 1.25rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+    transition: all 0.2s ease;
+}
+
+.time-range-button:hover {
+    background-color: #f5f3ff;
+    border-color: #c7d2fe;
+}
+
+.time-range-button:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.08);
+}
+
+.energy-widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.widget-card {
+    background-color: #ffffff;
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #f1f5f9;
+}
+
+.widget-title {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.widget-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+}
+
+.widget-sub {
+    font-size: 0.85rem;
+    color: #10b981;
+    margin-top: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.widget-sub.negative {
+    color: #ef4444;
+}
+
+.energy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+}
+
+.energy-card {
+    background-color: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+    margin: 0;
+    border: 1px solid #f1f5f9;
+}
+
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.card-title {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1.15rem;
+}
+
+.card-badge {
+    background-color: #ecfdf5;
+    color: #10b981;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.energy-chart {
+    height: 250px;
+    width: 100%;
+}
