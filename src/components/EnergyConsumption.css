@@ -13,9 +13,18 @@
 
 .energy-title-row {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+}
+
+.machine-select {
+    --placeholder-color: #4f46e5;
+    --placeholder-opacity: 1;
+}
+
+.machine-select::part(container) {
+    border-radius: 10px;
 }
 
 .time-range-button {
@@ -102,7 +111,7 @@
 .energy-card {
     background-color: #ffffff;
     border-radius: 20px;
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
     margin: 0;
     border: 1px solid #f1f5f9;

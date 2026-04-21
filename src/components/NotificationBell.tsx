@@ -12,8 +12,9 @@ import {
 import { notificationsOutline } from 'ionicons/icons';
 import {
   formatRelativeTime,
-  getLatestUnreadNotification,
+  getAllNotifications,
   getUnreadNotifications,
+  getReadIds,
   markManyRead,
   type NotificationItem,
 } from '../utils/notifications';
@@ -32,12 +33,12 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ markReadOnOpen = tr
 
   const [isOpen, setOpen] = useState(false);
   const [, setTick] = useState(0);
-  const [displayed, setDisplayed] = useState<NotificationItem | null>(null);
+  const [sessionUnreadIds, setSessionUnreadIds] = useState<Set<string>>(new Set());
 
   // Recomputed on every render; state updates are only used to trigger re-renders for the timer.
   const unreadCount = getUnreadNotifications().length;
-  const latest = getLatestUnreadNotification();
-  const toShow = displayed ?? latest;
+  const allNotifications = getAllNotifications();
+  const readSet = getReadIds();
 
   // Update timers (relative time) while popover is open.
   useEffect(() => {
@@ -47,38 +48,46 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ markReadOnOpen = tr
   }, [isOpen]);
 
   const handleOpen = () => {
-    const currentLatest = getLatestUnreadNotification();
-    setDisplayed(currentLatest);
+    const unread = getUnreadNotifications();
+    setSessionUnreadIds(new Set(unread.map(n => n.id)));
     setOpen(true);
 
-    if (!markReadOnOpen || !currentLatest) return;
+    if (!markReadOnOpen) return;
 
-    // Requirement: once user views/opens notification, don’t show again.
-    markManyRead([currentLatest.id]);
-    setTick((t) => t + 1);
+    if (unread.length > 0) {
+      markManyRead(unread.map(n => n.id));
+      setTick((t) => t + 1);
+    }
   };
 
   const renderNotification = (item: NotificationItem) => {
+    const isUnread = sessionUnreadIds.has(item.id) || !readSet.has(item.id);
+    
     return (
-      <IonList inset={false} lines="none">
-        <IonItem detail={false} lines="none">
-          <IonLabel>
-            <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{item.title}</div>
-            <div style={{ color: 'var(--ion-color-step-600)', marginTop: 4 }}>{item.message}</div>
-            <div
-              style={{
-                marginTop: 8,
-                fontSize: '0.78rem',
-                color: 'var(--ion-color-step-500)',
-                fontWeight: 700,
-                letterSpacing: '0.2px',
-              }}
-            >
-              {formatRelativeTime(item.createdAt)}
+      <IonItem key={item.id} detail={false} lines="inset" style={{ '--padding-start': '0', '--inner-padding-end': '0', width: '100%', overflowX: 'hidden' }}>
+        <IonLabel className="ion-text-wrap" style={{ padding: '8px 4px', margin: 0, width: '100%', overflowX: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ fontWeight: isUnread ? 800 : 600, fontSize: '0.95rem', color: isUnread ? 'var(--ion-color-primary)' : 'inherit', whiteSpace: 'normal', wordBreak: 'break-word', paddingRight: '8px' }}>
+               {item.title}
             </div>
-          </IonLabel>
-        </IonItem>
-      </IonList>
+            {isUnread && (
+              <div style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: 'var(--ion-color-primary)', marginTop: 6, flexShrink: 0 }} />
+            )}
+          </div>
+          <div style={{ color: 'var(--ion-color-step-600)', marginTop: 4, fontSize: '0.9rem', whiteSpace: 'normal', wordBreak: 'break-word' }}>{item.message}</div>
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: '0.78rem',
+              color: 'var(--ion-color-step-500)',
+              fontWeight: 700,
+              letterSpacing: '0.2px',
+            }}
+          >
+            {formatRelativeTime(item.createdAt)}
+          </div>
+        </IonLabel>
+      </IonItem>
     );
   };
 
@@ -119,34 +128,68 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ markReadOnOpen = tr
         isOpen={isOpen}
         onDidDismiss={() => {
           setOpen(false);
-          setDisplayed(null);
+          setSessionUnreadIds(new Set());
           setTick((t) => t + 1);
         }}
         trigger={triggerId}
         side="bottom"
         alignment="end"
         backdropDismiss={true}
+        style={{ '--width': '320px' }}
       >
-        <div style={{ width: 320, maxWidth: '90vw', padding: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontWeight: 900, fontSize: '1rem' }}>Notifications</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--ion-color-step-500)', fontWeight: 700 }}>
+        <div style={{ width: '100%', padding: '16px 12px', overflowX: 'hidden', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--ion-text-color)' }}>Notifications</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--ion-color-step-600)', fontWeight: 700 }}>
               {unreadCount > 0 ? `${unreadCount} new` : 'All caught up'}
             </div>
           </div>
 
-          <div style={{ marginTop: 10 }}>
-            {toShow ? (
-              renderNotification(toShow)
+          <style>
+            {`
+              .notification-scroll-container::-webkit-scrollbar {
+                display: block !important;
+                width: 6px !important;
+              }
+              .notification-scroll-container::-webkit-scrollbar-track {
+                background: #f1f1f1 !important;
+                border-radius: 10px !important;
+              }
+              .notification-scroll-container::-webkit-scrollbar-thumb {
+                background: #cbd5e1 !important;
+                border-radius: 10px !important;
+              }
+              .notification-scroll-container::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8 !important;
+              }
+            `}
+          </style>
+
+          <div 
+            className="notification-scroll-container"
+            style={{ 
+              maxHeight: '380px', 
+              overflowY: 'auto', 
+              overflowX: 'hidden',
+              marginTop: 10,
+              paddingRight: 4 // Space for the scrollbar
+            }}
+          >
+            {allNotifications.length > 0 ? (
+              <IonList inset={false} lines="none" style={{ paddingTop: 0, paddingBottom: 0, background: 'transparent' }}>
+                {allNotifications.map(renderNotification)}
+              </IonList>
             ) : (
               <div
                 style={{
-                  padding: '18px 12px',
+                  padding: '24px 16px',
                   borderRadius: 12,
                   background: 'var(--ion-color-step-50)',
                   border: '1px solid var(--ion-color-step-100)',
-                  color: 'var(--ion-color-step-600)',
-                  fontWeight: 700,
+                  color: 'var(--ion-color-step-500)',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  fontSize: '0.9rem'
                 }}
               >
                 No new notifications.

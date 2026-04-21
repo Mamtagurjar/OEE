@@ -15,6 +15,7 @@ import ApexCharts from 'apexcharts';
 import '../components/EnergyConsumption.css';
 import PdfDownloadControl from '../components/PdfDownloadControl';
 import NotificationBell from '../components/NotificationBell';
+import { makeSeededRandom } from '../utils/timeRange';
 
 const MachineComparison: React.FC = () => {
   const barChartRef = useRef<HTMLDivElement | null>(null);
@@ -71,11 +72,13 @@ const MachineComparison: React.FC = () => {
         if (diffMs > 24 * 60 * 60 * 1000) xAxisFormat = "dd MMM";
     }
     
+    const rng = makeSeededRandom(`${selectedRange}|${customRange?.start ?? ''}`);
+    
     for (let i = pointCount - 1; i >= 0; i--) {
       categories.push(now - i * stepMs);
-      dataM1.push(parseFloat((Math.random() * (85 - 65) + 65).toFixed(1))); // kW
-      dataM2.push(parseFloat((Math.random() * (110 - 80) + 80).toFixed(1))); // kW
-      dataM3.push(parseFloat((Math.random() * (75 - 55) + 55).toFixed(1))); // kW
+      dataM1.push(parseFloat((rng() * (85 - 65) + 65).toFixed(1))); // kW
+      dataM2.push(parseFloat((rng() * (110 - 80) + 80).toFixed(1))); // kW
+      dataM3.push(parseFloat((rng() * (75 - 55) + 55).toFixed(1))); // kW
     }
     
     if (barChartRef.current) {
@@ -201,3 +204,10 @@ const MachineComparison: React.FC = () => {
 };
 
 export default MachineComparison;
+
+
+
+
+
+
+

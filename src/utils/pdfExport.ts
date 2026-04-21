@@ -1,3 +1,4 @@
+
 export type PdfExportOptions = {
   fileName: string;
   backgroundColor?: string;
@@ -38,46 +39,163 @@ export const exportElementToPdf = async (
     throw new Error('PDF export target is not mounted in the DOM.');
   }
 
-  const canvas = await html2canvas(element, {
-    backgroundColor,
-    scale,
-    useCORS: true,
-    logging: false,
-    windowWidth: document.documentElement.scrollWidth,
-  });
+  // Assign a temporary ID to locate it in the cloned document
+  const originalId = element.id;
+  const tempId = `pdf-export-target-${Date.now()}`;
+  element.id = tempId;
 
-  const imgData = canvas.toDataURL('image/png');
+  let canvas: HTMLCanvasElement;
+  try {
+    const exportWidth = 1100;
+    canvas = await html2canvas(element, {
+      backgroundColor,
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      windowWidth: exportWidth,
+      width: exportWidth,
+      onclone: (clonedDoc) => {
+        const clonedEl = clonedDoc.getElementById(tempId);
+        if (clonedEl) {
+          const body = clonedDoc.body;
+          const html = clonedDoc.documentElement;
 
-  // Use mm to avoid DPI confusion.
+          html.style.width = `${exportWidth}px`;
+          body.style.width = `${exportWidth}px`;
+          body.style.margin = '0';
+          body.style.padding = '0';
+          body.style.backgroundColor = backgroundColor || '#f8fafc';
+
+          clonedEl.style.width = `${exportWidth}px`;
+          clonedEl.style.maxWidth = `${exportWidth}px`;
+          clonedEl.style.margin = '0';
+          clonedEl.style.padding = '30px';
+          clonedEl.style.boxSizing = 'border-box';
+          clonedEl.style.display = 'block';
+          clonedEl.style.visibility = 'visible';
+          clonedEl.style.position = 'absolute';
+          clonedEl.style.top = '0';
+          clonedEl.style.left = '0';
+          clonedEl.style.height = 'auto';
+          clonedEl.style.minHeight = '0';
+
+          body.innerHTML = '';
+          body.appendChild(clonedEl);
+
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `
+            * {
+              box-sizing: border-box !important;
+              -webkit-print-color-adjust: exact !important;
+            }
+
+            .energy-inner, main, section, .energy-page-wrapper {
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              display: block !important;
+              height: auto !important;
+              min-height: auto !important;
+            }
+
+            .energy-title-row {
+              display: flex !important;
+              justify-content: flex-end !important;
+              width: 100% !important;
+              margin-bottom: 40px !important;
+              padding-bottom: 20px
+              border-bottom: 2px solid #e2e8f0;
+            }
+            .energy-title-row h2 { 
+              font-size: 34px !important; 
+              font-weight: 800 !important; 
+              color: #0f172a !important;
+              margin: 0 !important;
+            }
+
+            .energy-widgets, .energy-grid, .energy-dashboard-grid {
+              display: grid !important;
+              grid-template-columns: repeat(3, 1fr) !important;
+              gap: 30px !important;
+              width: 100% !important;
+              margin-bottom: 40px !important;
+            }
+
+            .energy-card, .widget-card, ion-card {
+              grid-column: span 1;
+              width: 100% !important;
+              margin: 0 !important;
+              background-color: #ffffff !important;
+              border: 1px solid #e2e8f0 !important;
+              border-radius: 20px !important;
+              padding: 25px !important;
+              box-shadow: none !important;
+              break-inside: avoid !important;
+              display: flex !important;
+              flex-direction: column !important;
+              min-height: 200px;
+            }
+
+            .widget-value { font-size: 32px !important; font-weight: 800 !important; color: #0f172a !important; margin: 10px 0 !important; }
+            .widget-title { font-size: 16px !important; font-weight: 700 !important; color: #64748b !important; }
+            .card-title { font-size: 20px !important; font-weight: 700 !important; color: #1e293b !important; display: block !important; }
+
+            .energy-grid > .energy-card:nth-child(2),
+            [style*="grid-column: span 2"], [style*="grid-column:span 2"] {
+              grid-column: span 2 !important;
+            }
+
+            .energy-chart, [id^="energy-chart-"], .apexcharts-canvas, .apexcharts-canvas svg {
+              width: 100% !important;
+              min-height: 380px !important;
+              visibility: visible !important;
+            }
+
+            .time-range-button, button, .machine-selector-wrapper, 
+            ion-select, .ion-hide, .card-badge {
+              display: none !important;
+            }
+
+            ion-list { background: transparent !important; }
+            ion-item { --background: transparent !important; --border-style: none !important; }
+          `;
+          clonedDoc.head.appendChild(style);
+        }
+      },
+    });
+  } finally {
+    // Restore original ID
+    if (originalId) {
+      element.id = originalId;
+    } else {
+      element.removeAttribute('id');
+    }
+  }
+
+  const imgData = canvas.toDataURL('image/png', 1.0);
   const pdf = new jsPDF({
     orientation: 'p',
     unit: 'mm',
     format: 'a4',
+    compress: true
   });
 
-  const pageWidthMm = pdf.internal.pageSize.getWidth();
-  const pageHeightMm = pdf.internal.pageSize.getHeight();
+  const imgProps = pdf.getImageProperties(imgData);
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-  const canvasWidthMm = pxToMm(canvas.width);
-  const canvasHeightMm = pxToMm(canvas.height);
+  let remainingHeight = pdfHeight;
+  let position = 0;
+  const pageHeight = pdf.internal.pageSize.getHeight();
 
-  // Fit image to page width.
-  const renderWidthMm = pageWidthMm;
-  const renderHeightMm = (canvasHeightMm * renderWidthMm) / canvasWidthMm;
-
-  // Multi-page handling by shifting the same image up.
-  let remainingHeightMm = renderHeightMm;
-  let offsetYmm = 0;
-
-  // First page
-  pdf.addImage(imgData, 'PNG', 0, offsetYmm, renderWidthMm, renderHeightMm);
-  remainingHeightMm -= pageHeightMm;
-
-  while (remainingHeightMm > 0) {
-    offsetYmm -= pageHeightMm;
-    pdf.addPage();
-    pdf.addImage(imgData, 'PNG', 0, offsetYmm, renderWidthMm, renderHeightMm);
-    remainingHeightMm -= pageHeightMm;
+  while (remainingHeight > 0) {
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight, undefined, 'FAST');
+    remainingHeight -= pageHeight;
+    if (remainingHeight > 0) {
+      position -= pageHeight;
+      pdf.addPage();
+    }
   }
 
   // Web vs Native
@@ -114,3 +232,4 @@ export const exportElementToPdf = async (
     dialogTitle: 'Share PDF',
   });
 };
+

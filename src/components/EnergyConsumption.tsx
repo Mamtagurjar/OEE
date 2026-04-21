@@ -5,6 +5,7 @@ import "./EnergyConsumption.css";
 import TimeRangeModal from "./TimeRangeModal";
 import { IonIcon, IonCard } from "@ionic/react";
 import { calendarOutline } from "ionicons/icons";
+import { makeSeededRandom } from "../utils/timeRange";
 
 const CHART_COUNT = 3;
 
@@ -58,9 +59,9 @@ const FIXED_RANGE_SPECS: Record<Exclude<RangeKey, "custom">, RangeSpec> = {
   lastMonth: { totalMinutes: 30 * 24 * 60, stepMinutes: 24 * 60 },
 };
 
-const valueFromWave = (idx: number, machineOffset: number, base: number): number => {
+const valueFromWave = (idx: number, machineOffset: number, base: number, rng: () => number): number => {
   const trend = Math.sin((idx + machineOffset) / 3) * 8;
-  const noise = (Math.random() - 0.5) * 6;
+  const noise = (rng() - 0.5) * 6;
   return Math.max(5, Math.round(base + trend + noise));
 };
 
@@ -142,12 +143,14 @@ const buildDataset = (
   const dataA: number[] = [];
   const dataB: number[] = [];
 
+  const rng = makeSeededRandom(`${range}|${machineIdx}|${customRange?.start ?? ''}`);
+
   for (let i = 0; i < pointCount; i++) {
     const ts = Math.min(startAt + i * stepMs, endAt);
     timestamps.push(ts);
     labels.push(formatTick(ts, spec.stepMinutes));
-    dataA.push(valueFromWave(i, machineIdx * 1.7, 48));
-    dataB.push(valueFromWave(i, machineIdx * 1.2, 35));
+    dataA.push(valueFromWave(i, machineIdx * 1.7, 48, rng));
+    dataB.push(valueFromWave(i, machineIdx * 1.2, 35, rng));
   }
 
   return { labels, timestamps, dataA, dataB, stepMinutes: spec.stepMinutes };
