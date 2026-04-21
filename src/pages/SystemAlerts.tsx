@@ -265,7 +265,7 @@ const SystemAlerts: React.FC = () => {
             <p style={{ color: 'var(--ion-color-step-600)', marginBottom: '1.5rem', marginTop: 0 }}>
               Use this tool to manually broadcast a network-wide system alert that will instantly propagate to the notifications center.
             </p>
-            <IonItem fill="outline" style={{ marginBottom: '1.25rem', '--border-radius': '8px', '--padding-top': '8px', '--padding-bottom': '8px' }}>
+            <IonItem style={{ marginBottom: '1.25rem', '--border-radius': '8px', '--padding-top': '8px', '--padding-bottom': '8px' }}>
               <IonLabel position="floating">Alert Title</IonLabel>
               <IonInput 
                 value={alertTitle} 
@@ -275,7 +275,7 @@ const SystemAlerts: React.FC = () => {
                 style={{ marginTop: '4px' }}
               />
             </IonItem>
-            <IonItem fill="outline" style={{ marginBottom: '1rem', '--border-radius': '8px', '--padding-top': '8px', '--padding-bottom': '8px' }}>
+            <IonItem style={{ marginBottom: '1rem', '--border-radius': '8px', '--padding-top': '8px', '--padding-bottom': '8px' }}>
               <IonLabel position="floating">Incident Details</IonLabel>
               <IonTextarea 
                 value={alertMessage} 
