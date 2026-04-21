@@ -22,14 +22,16 @@ const MachineComparison: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedRange, setSelectedRange] = useState("5m");
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState("5 min");
   const [customRange, setCustomRange] = useState<{start: string, end: string} | null>(null);
 
   const handleSelectRange = (
     range: string,
-    _label: string,
+    label: string,
     selectedCustomRange?: {start: string, end: string}
   ) => {
     setSelectedRange(range);
+    setSelectedRangeLabel(label);
     setCustomRange(range === "custom" && selectedCustomRange ? selectedCustomRange : null);
   };
 
@@ -152,8 +154,31 @@ const MachineComparison: React.FC = () => {
           <PdfDownloadControl
             pageTitle="Machine Comparison"
             selectedRange={selectedRange}
+            selectedRangeLabel={selectedRangeLabel}
             onSelectRange={handleSelectRange}
             contentRef={contentRef}
+            moduleType="comparison"
+            data={{
+              widgets: [
+                { title: 'Machine 1 Status', value: 'Normal', sub: 'Balanced load distribution', trendColor: '#4f46e5' },
+                { title: 'Peak Consumer', value: 'Machine 2', sub: '▲ 12% higher than avg', trendColor: '#ef4444' },
+                { title: 'Most Efficient', value: 'Machine 3', sub: 'Operating at optimal load', trendColor: '#f59e0b' }
+              ],
+              chartTitles: ['Power Demand Comparison'],
+              chartDatasets: [
+                { 
+                  type: 'bar', 
+                  series: [
+                    { name: 'Machine 1 (kW)', data: [65, 68, 70, 67, 69, 72] },
+                    { name: 'Machine 2 (kW)', data: [80, 85, 90, 88, 86, 95] },
+                    { name: 'Machine 3 (kW)', data: [55, 58, 60, 57, 59, 62] }
+                  ],
+                  colors: ['#4f46e5', '#10b981', '#f59e0b'],
+                  categories: [Date.now() - 5000, Date.now() - 4000, Date.now() - 3000, Date.now() - 2000, Date.now() - 1000, Date.now()],
+                  yTitle: 'kW'
+                }
+              ]
+            }}
           />
           <NotificationBell />
         </IonToolbar>
@@ -188,7 +213,7 @@ const MachineComparison: React.FC = () => {
           </div>
 
           <div className="energy-grid" style={{ marginTop: '1.5rem' }}>
-            <IonCard className="energy-card" style={{ gridColumn: 'span 2', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', border: 'none', background: '#ffffff' }}>
+            <IonCard className="energy-card span-2" style={{ borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', border: 'none', background: '#ffffff' }}>
               <div className="card-head" style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="card-title" style={{ fontWeight: 700, fontSize: '1.1rem', color: '#1e293b' }}>Power Demand Comparison</div>
                 <div className="card-badge" style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '4px 12px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 600 }}>History</div>

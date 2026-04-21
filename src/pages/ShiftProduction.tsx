@@ -26,16 +26,18 @@ const ShiftProduction: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedRange, setSelectedRange] = useState('5m');
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState('5 min');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const [selectedShift, setSelectedShift] = useState<'General' | '1st shift' | '2nd shift' | '3rd shift'>('General');
 
   const handleSelectRange = (
     range: string,
-    _label: string,
+    label: string,
     selectedCustomRange?: CustomRange,
   ) => {
     setSelectedRange(range);
+    setSelectedRangeLabel(label);
     setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
   };
 
@@ -72,9 +74,23 @@ const ShiftProduction: React.FC = () => {
           <PdfDownloadControl
             pageTitle="Shift Summary"
             selectedRange={selectedRange}
+            selectedRangeLabel={selectedRangeLabel}
             onSelectRange={handleSelectRange}
             contentRef={contentRef}
             fileName={(rangeLabel) => `Shift Summary - ${rangeLabel}.pdf`}
+            moduleType="production"
+            data={{
+              widgets: [
+                { title: 'Total Energy', value: `${metrics.totalEnergy.toFixed(1)} kWh`, sub: '+6.2% vs last shift', trendColor: '#4f46e5' },
+                { title: 'Peak Demand', value: `${metrics.peakDemand.toFixed(1)} kW`, sub: 'Recorded at 14:20', trendColor: '#ef4444' },
+                { title: 'Avg Power Factor', value: metrics.avgPf.toFixed(2), sub: 'Within target range', trendColor: '#10b981' }
+              ],
+              progressItems: [
+                { label: 'Machine 1', used: Math.round(metrics.m1.used), budget: metrics.m1.budget, color: '#4f46e5' },
+                { label: 'Machine 2', used: Math.round(metrics.m2.used), budget: metrics.m2.budget, color: '#10b981' },
+                { label: 'Machine 3', used: Math.round(metrics.m3.used), budget: metrics.m3.budget, color: '#f59e0b' }
+              ]
+            }}
           />
           <NotificationBell />
         </IonToolbar>
@@ -127,7 +143,7 @@ const ShiftProduction: React.FC = () => {
           </div>
 
           <div className="energy-grid" style={{ marginTop: '1.5rem' }}>
-            <IonCard className="energy-card" style={{ gridColumn: 'span 2', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
+            <IonCard className="energy-card span-2" style={{ borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
               <div className="card-head" style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
                 <div className="card-title" style={{ fontWeight: 700, fontSize: '1.1rem' }}>Energy Budget vs Used</div>
                 <div className="card-badge" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>Shift</div>

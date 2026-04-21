@@ -35,6 +35,7 @@ const SystemAlerts: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedRange, setSelectedRange] = useState('5m');
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState('5 min');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
@@ -73,10 +74,11 @@ const SystemAlerts: React.FC = () => {
 
   const handleSelectRange = (
     range: string,
-    _label: string,
+    label: string,
     selectedCustomRange?: CustomRange,
   ) => {
     setSelectedRange(range);
+    setSelectedRangeLabel(label);
     setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
   };
 
@@ -133,9 +135,24 @@ const SystemAlerts: React.FC = () => {
           <PdfDownloadControl
             pageTitle="System Alerts"
             selectedRange={selectedRange}
+            selectedRangeLabel={selectedRangeLabel}
             onSelectRange={handleSelectRange}
             contentRef={contentRef}
             fileName={(rangeLabel) => `System Alerts - ${rangeLabel}.pdf`}
+            moduleType="alerts"
+            data={{
+              widgets: [
+                { title: 'Critical Needs', value: criticalCount, sub: 'Action required immediately', trendColor: '#ef4444' },
+                { title: 'Warnings', value: warningCount, sub: 'Monitor closely', trendColor: '#f59e0b' },
+                { title: 'System Status', value: `${statusPct}%`, sub: 'Network health nominal', trendColor: '#10b981' }
+              ],
+              alerts: alerts.map(a => ({
+                title: `${a.machine} - ${a.message}`,
+                message: `Incident type: ${a.type}`,
+                time: a.time,
+                color: a.type === 'critical' ? '#ef4444' : a.type === 'warning' ? '#f59e0b' : '#3b82f6'
+              }))
+            }}
           />
           <NotificationBell />
         </IonToolbar>

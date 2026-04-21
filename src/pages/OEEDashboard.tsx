@@ -23,14 +23,16 @@ const OEEDashboard: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedRange, setSelectedRange] = useState('5m');
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState('5 min');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const handleSelectRange = (
     range: string,
-    _label: string,
+    label: string,
     selectedCustomRange?: CustomRange,
   ) => {
     setSelectedRange(range);
+    setSelectedRangeLabel(label);
     setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
   };
 
@@ -115,9 +117,30 @@ const OEEDashboard: React.FC = () => {
           <PdfDownloadControl
             pageTitle="Efficiency Analytics"
             selectedRange={selectedRange}
+            selectedRangeLabel={selectedRangeLabel}
             onSelectRange={handleSelectRange}
             contentRef={contentRef}
             fileName={(rangeLabel) => `Efficiency Analytics - ${rangeLabel}.pdf`}
+            moduleType="oee"
+            data={{
+              avgOee: metrics.avg.toFixed(1),
+              widgets: [
+                { title: 'Power Uptime', value: `${metrics.m1.toFixed(1)}%`, sub: 'Active vs Downtime', trendColor: '#3b82f6' },
+                { title: 'Load Efficiency', value: `${metrics.m2.toFixed(1)}%`, sub: 'Current vs Peak Load', trendColor: '#8b5cf6' },
+                { title: 'Power Quality', value: `${metrics.m3.toFixed(1)}%`, sub: 'Clean Power Accuracy', trendColor: '#10b981' }
+              ],
+              radialSeries: [
+                parseFloat(metrics.m1.toFixed(1)),
+                parseFloat(metrics.m2.toFixed(1)),
+                parseFloat(metrics.m3.toFixed(1))
+              ],
+              radialLabels: ['Machine 1', 'Machine 2', 'Machine 3'],
+              breakdownSeries: [
+                { name: 'Uptime', data: [98, 92, 99] },
+                { name: 'Load Efficiency', data: [88, 81, 95] },
+                { name: 'Power Quality', data: [92, 95, 91] }
+              ]
+            }}
           />
           <NotificationBell />
         </IonToolbar>

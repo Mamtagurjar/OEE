@@ -24,14 +24,16 @@ const MaintenanceLog: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedRange, setSelectedRange] = useState('5m');
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState('5 min');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const handleSelectRange = (
     range: string,
-    _label: string,
+    label: string,
     selectedCustomRange?: CustomRange,
   ) => {
     setSelectedRange(range);
+    setSelectedRangeLabel(label);
     setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
   };
 
@@ -55,9 +57,23 @@ const MaintenanceLog: React.FC = () => {
           <PdfDownloadControl
             pageTitle="Maintenance Log"
             selectedRange={selectedRange}
+            selectedRangeLabel={selectedRangeLabel}
             onSelectRange={handleSelectRange}
             contentRef={contentRef}
             fileName={(rangeLabel) => `Maintenance Log - ${rangeLabel}.pdf`}
+            moduleType="maintenance"
+            data={{
+              widgets: [
+                { title: 'Active Incidents', value: stats.incidents, sub: 'Pending electrical flags', trendColor: '#ef4444' },
+                { title: 'Next Inspection', value: `${stats.nextInspectionDays} Days`, sub: 'Scheduled grid diagnostics', trendColor: '#3b82f6' },
+                { title: 'System Health', value: '96%', sub: 'Within safety limits', trendColor: '#10b981' }
+              ],
+              logs: [
+                { name: 'Machine 1', status: 'Stable', statusColor: '#10b981', lastCheck: 'Oct 12, 2023' },
+                { name: 'Machine 2', status: 'Needs Check', statusColor: '#f59e0b', lastCheck: 'Sept 05, 2023' },
+                { name: 'Machine 3', status: 'Stable', statusColor: '#10b981', lastCheck: 'Nov 01, 2023' }
+              ]
+            }}
           />
           <NotificationBell />
         </IonToolbar>

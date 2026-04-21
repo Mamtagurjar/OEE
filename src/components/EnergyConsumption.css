@@ -3,12 +3,13 @@
     background-color: #f8fafc;
     color: #1f2937;
     padding: 1.5rem;
-    min-height: 100vh;
+    /* min-height: 100vh; */
 }
 
 .energy-inner {
     max-width: 1400px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .energy-title-row {
@@ -16,6 +17,24 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+    padding: 0 0.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+@media screen and (max-width: 600px) {
+    .energy-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .machine-selector-wrapper, .time-range-button {
+        width: 100%;
+    }
+    
+    .machine-select {
+        width: 100% !important;
+    }
 }
 
 .machine-select {
@@ -48,16 +67,30 @@
     border-color: #c7d2fe;
 }
 
-.time-range-button:active {
-    transform: scale(0.96);
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.08);
-}
-
 .energy-widgets {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     margin-bottom: 2.5rem;
+    width: 100%;
+}
+
+@media screen and (max-width: 1024px) {
+    .energy-widgets {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .energy-widgets {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .energy-inner {
+        padding: 0 0.5rem;
+    }
 }
 
 .widget-card {
@@ -104,8 +137,16 @@
 
 .energy-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+@media screen and (max-width: 1024px) {
+    .energy-grid {
+        display: flex !important;
+        flex-direction: column !important;
+    }
 }
 
 .energy-card {
@@ -115,6 +156,13 @@
     box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
     margin: 0;
     border: 1px solid #f1f5f9;
+    grid-column: span 1; /* Reset span by default for smaller/flex layouts */
+}
+
+@media screen and (min-width: 1025px) {
+    .energy-card.span-2 {
+        grid-column: span 2;
+    }
 }
 
 .card-head {

@@ -25,6 +25,7 @@ const PowerMonitoring: React.FC = () => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedRange, setSelectedRange] = useState('5m');
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState('5 min');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const [m1Voltage, setM1Voltage] = useState(229.4);
@@ -36,10 +37,11 @@ const PowerMonitoring: React.FC = () => {
 
   const handleSelectRange = (
     range: string,
-    _label: string,
+    label: string,
     selectedCustomRange?: CustomRange,
   ) => {
     setSelectedRange(range);
+    setSelectedRangeLabel(label);
     setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
   };
 
@@ -230,9 +232,36 @@ const PowerMonitoring: React.FC = () => {
           <PdfDownloadControl
             pageTitle="Power Monitoring"
             selectedRange={selectedRange}
+            selectedRangeLabel={selectedRangeLabel}
             onSelectRange={handleSelectRange}
             contentRef={contentRef}
             fileName={(rangeLabel) => `Power Monitoring - ${rangeLabel}.pdf`}
+            moduleType="power"
+            data={{
+              widgets: [
+                { title: 'Machine 1 Voltage', value: `${m1Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#4f46e5' },
+                { title: 'Machine 2 Current', value: `${m2Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#10b981' },
+                { title: 'Machine 3 Frequency', value: `${m3Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#f59e0b' }
+              ],
+              chartTitles: ['Power Factor by Machine', 'Voltage Trend (Live)'],
+              chartDatasets: [
+                { 
+                  type: 'radialBar', 
+                  series: pfRef.current.map(pf => parseFloat((pf * 100).toFixed(1))),
+                  radialLabels: ['Machine 1', 'Machine 2', 'Machine 3']
+                },
+                { 
+                  type: 'area', 
+                  series: [
+                    { name: 'Machine 1', data: [225, 228, 230, 227, 229, 231] }, // Simplified for brevity in this mock-up
+                    { name: 'Machine 2', data: [218, 220, 222, 219, 221, 223] },
+                    { name: 'Machine 3', data: [238, 240, 242, 239, 241, 243] }
+                  ],
+                  colors: ['#4f46e5', '#10b981', '#f59e0b'],
+                  categories: [Date.now() - 5000, Date.now() - 4000, Date.now() - 3000, Date.now() - 2000, Date.now() - 1000, Date.now()]
+                }
+              ]
+            }}
           />
           <NotificationBell />
         </IonToolbar>
@@ -302,7 +331,7 @@ const PowerMonitoring: React.FC = () => {
               <div ref={chartRef1} style={{ padding: '1rem 0' }}></div>
             </IonCard>
 
-            <IonCard className="energy-card" style={{ gridColumn: 'span 2', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
+            <IonCard className="energy-card span-2" style={{ borderRadius: '16px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}>
               <div className="card-head" style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
                 <div className="card-title" style={{ fontWeight: 700, fontSize: '1.1rem' }}>Voltage Trend (Live)</div>
                 <div className="card-badge" style={{ backgroundColor: '#f3e8ff', color: '#8b5cf6' }}>V</div>
