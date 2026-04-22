@@ -49,9 +49,9 @@ const PowerMonitoring: React.FC = () => {
   const [thresholds, setThresholds] = useState(() => {
     const saved = localStorage.getItem('power_thresholds');
     return saved ? JSON.parse(saved) : {
-      m1: { v: 250, i: 50, f: 50 },
-      m2: { v: 250, i: 50, f: 50 },
-      m3: { v: 250, i: 50, f: 50 }
+      m1: { v: 300, i: 50, f: 50 },
+      m2: { v: 300, i: 50, f: 50 },
+      m3: { v: 300, i: 50, f: 50 }
     };
   });
 
@@ -102,9 +102,9 @@ const PowerMonitoring: React.FC = () => {
     const now = Date.now();
     for (let i = points - 1; i >= 0; i--) {
       categories.push(now - i * tickMs);
-      vM1.push(parseFloat((rng() * (235 - 225) + 225).toFixed(1)));
-      vM2.push(parseFloat((rng() * (225 - 215) + 215).toFixed(1)));
-      vM3.push(parseFloat((rng() * (245 - 235) + 235).toFixed(1)));
+      vM1.push(parseFloat((rng() * (255 - 225) + 225).toFixed(1)));
+      vM2.push(parseFloat((rng() * (245 - 215) + 215).toFixed(1)));
+      vM3.push(parseFloat((rng() * (265 - 235) + 235).toFixed(1)));
     }
 
     if (chartRef1.current) {
@@ -122,7 +122,7 @@ const PowerMonitoring: React.FC = () => {
         m2: '#10b981',
         m3: '#f59e0b'
       };
-      
+
       let chartColors = [machineColors.m1, machineColors.m2, machineColors.m3];
       if (selectedMachine !== 'all') {
         chartColors = [machineColors[selectedMachine as keyof typeof machineColors]];
@@ -183,7 +183,7 @@ const PowerMonitoring: React.FC = () => {
         m2: '#10b981',
         m3: '#f59e0b'
       };
-      
+
       let chartColors = [machineColors.m1, machineColors.m2, machineColors.m3];
       if (selectedMachine !== 'all') {
         chartColors = [machineColors[selectedMachine as keyof typeof machineColors]];
@@ -207,7 +207,7 @@ const PowerMonitoring: React.FC = () => {
         },
         yaxis: {
           min: 200,
-          max: 260,
+          max: 280,
           title: { text: 'Voltage (V)' }
         },
         tooltip: {
@@ -234,15 +234,15 @@ const PowerMonitoring: React.FC = () => {
         pfChart.updateSeries(series);
       }
 
-      const v1 = parseFloat((Math.random() * (235 - 225) + 225).toFixed(1));
+      const v1 = parseFloat((Math.random() * (255 - 225) + 225).toFixed(1));
       const i1 = parseFloat((Math.random() * (50 - 30) + 30).toFixed(1));
       const f1 = parseFloat((Math.random() * (50.10 - 49.90) + 49.90).toFixed(2));
 
-      const v2 = parseFloat((Math.random() * (225 - 215) + 215).toFixed(1));
+      const v2 = parseFloat((Math.random() * (245 - 215) + 215).toFixed(1));
       const i2 = parseFloat((Math.random() * (55 - 35) + 35).toFixed(1));
       const f2 = parseFloat((Math.random() * (50.10 - 49.90) + 49.90).toFixed(2));
 
-      const v3 = parseFloat((Math.random() * (245 - 235) + 235).toFixed(1));
+      const v3 = parseFloat((Math.random() * (265 - 235) + 235).toFixed(1));
       const i3 = parseFloat((Math.random() * (45 - 25) + 25).toFixed(1));
       const f3 = parseFloat((Math.random() * (50.10 - 49.90) + 49.90).toFixed(2));
 
@@ -335,17 +335,17 @@ const PowerMonitoring: React.FC = () => {
               ],
               chartTitles: ['Power Factor by Machine', 'Voltage Trend (Live)'],
               chartDatasets: [
-                { 
-                  type: 'radialBar', 
+                {
+                  type: 'radialBar',
                   series: pfRef.current.map(pf => parseFloat((pf * 100).toFixed(1))),
                   radialLabels: ['Machine 1', 'Machine 2', 'Machine 3']
                 },
-                { 
-                  type: 'area', 
+                {
+                  type: 'area',
                   series: [
-                    { name: 'Machine 1', data: [225, 228, 230, 227, 229, 231] }, // Simplified for brevity in this mock-up
-                    { name: 'Machine 2', data: [218, 220, 222, 219, 221, 223] },
-                    { name: 'Machine 3', data: [238, 240, 242, 239, 241, 243] }
+                    { name: 'Machine 1', data: [225, 240, 255, 230, 245, 250] },
+                    { name: 'Machine 2', data: [215, 230, 245, 220, 235, 240] },
+                    { name: 'Machine 3', data: [235, 250, 265, 240, 255, 260] }
                   ],
                   colors: ['#4f46e5', '#10b981', '#f59e0b'],
                   categories: [Date.now() - 5000, Date.now() - 4000, Date.now() - 3000, Date.now() - 2000, Date.now() - 1000, Date.now()]
