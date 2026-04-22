@@ -18,6 +18,7 @@ import '../components/EnergyConsumption.css';
 import PdfDownloadControl from '../components/PdfDownloadControl';
 import NotificationBell from '../components/NotificationBell';
 import { getTimeRangeTotalMinutes, makeSeededRandom, type CustomRange } from '../utils/timeRange';
+import { triggerAlert } from '../utils/notifications';
 
 const PowerMonitoring: React.FC = () => {
   const chartRef1 = useRef<HTMLDivElement | null>(null);
@@ -29,11 +30,49 @@ const PowerMonitoring: React.FC = () => {
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const [m1Voltage, setM1Voltage] = useState(229.4);
+  const [m1Current, setM1Current] = useState(42.1);
+  const [m1Freq, setM1Freq] = useState(50.01);
+
+  const [m2Voltage, setM2Voltage] = useState(221.2);
   const [m2Current, setM2Current] = useState(46.2);
+  const [m2Freq, setM2Freq] = useState(49.98);
+
+  const [m3Voltage, setM3Voltage] = useState(238.5);
+  const [m3Current, setM3Current] = useState(38.4);
   const [m3Freq, setM3Freq] = useState(50.02);
   const pfRef = useRef<[number, number, number]>([0.92, 0.88, 0.95]);
 
-  const [selectedMachine, setSelectedMachine] = useState('all');
+  const [selectedMachine, setSelectedMachine] = useState('m1');
+
+  // Custom Alerts State
+  const [alertMachine, setAlertMachine] = useState('m1');
+  const [thresholds, setThresholds] = useState(() => {
+    const saved = localStorage.getItem('power_thresholds');
+    return saved ? JSON.parse(saved) : {
+      m1: { v: 250, i: 50, f: 50 },
+      m2: { v: 250, i: 50, f: 50 },
+      m3: { v: 250, i: 50, f: 50 }
+    };
+  });
+
+  const [inputV, setInputV] = useState(thresholds[alertMachine].v);
+  const [inputI, setInputI] = useState(thresholds[alertMachine].i);
+  const [inputF, setInputF] = useState(thresholds[alertMachine].f);
+
+  useEffect(() => {
+    setInputV(thresholds[alertMachine].v);
+    setInputI(thresholds[alertMachine].i);
+    setInputF(thresholds[alertMachine].f);
+  }, [alertMachine, thresholds]);
+
+  const handleUpdateThresholds = () => {
+    const updated = {
+      ...thresholds,
+      [alertMachine]: { v: Number(inputV), i: Number(inputI), f: Number(inputF) }
+    };
+    setThresholds(updated);
+    localStorage.setItem('power_thresholds', JSON.stringify(updated));
+  };
 
   const handleSelectRange = (
     range: string,
@@ -52,7 +91,7 @@ const PowerMonitoring: React.FC = () => {
     const totalMinutes = getTimeRangeTotalMinutes(selectedRange, customRange);
     const points = ['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'].includes(selectedRange) ? 7 : 12;
     const stepMs = Math.max(3000, Math.round((totalMinutes * 60000) / Math.max(1, points - 1)));
-    const tickMs = stepMs;
+    const tickMs = 1000; // Reduced to 1 second for faster responsiveness
 
     const categories: number[] = [];
     const vM1: number[] = [];
@@ -78,14 +117,25 @@ const PowerMonitoring: React.FC = () => {
         labels = [`Machine ${idx + 1}`];
       }
 
+      const machineColors = {
+        m1: '#4f46e5',
+        m2: '#10b981',
+        m3: '#f59e0b'
+      };
+      
+      let chartColors = [machineColors.m1, machineColors.m2, machineColors.m3];
+      if (selectedMachine !== 'all') {
+        chartColors = [machineColors[selectedMachine as keyof typeof machineColors]];
+      }
+
       pfChart = new ApexCharts(chartRef1.current, {
         chart: {
           type: 'radialBar',
           height: 350,
-          animations: { enabled: true, dynamicAnimation: { speed: 1000 } }
+          animations: { enabled: true, dynamicAnimation: { speed: 500 } }
         },
         series: series,
-        colors: ['#4f46e5', '#10b981', '#f59e0b'],
+        colors: chartColors,
         plotOptions: {
           radialBar: {
             hollow: { size: '40%' },
@@ -128,21 +178,28 @@ const PowerMonitoring: React.FC = () => {
         series = [series[idx]];
       }
 
+      const machineColors = {
+        m1: '#4f46e5',
+        m2: '#10b981',
+        m3: '#f59e0b'
+      };
+      
+      let chartColors = [machineColors.m1, machineColors.m2, machineColors.m3];
+      if (selectedMachine !== 'all') {
+        chartColors = [machineColors[selectedMachine as keyof typeof machineColors]];
+      }
+
       voltageChart = new ApexCharts(chartRef2.current, {
         chart: {
           type: 'area',
           height: 300,
           toolbar: { show: false },
-          animations: { enabled: true, dynamicAnimation: { speed: 1000 } },
+          animations: { enabled: true, dynamicAnimation: { speed: 500 } },
           zoom: { enabled: false }
         },
         stroke: { curve: 'smooth', width: 2 },
-        series: [
-          { name: 'Machine 1 (V)', data: [...vM1] },
-          { name: 'Machine 2 (V)', data: [...vM2] },
-          { name: 'Machine 3 (V)', data: [...vM3] }
-        ],
-        colors: ['#4f46e5', '#10b981', '#f59e0b'],
+        series: series,
+        colors: chartColors,
         xaxis: {
           type: 'datetime',
           categories: [...categories],
@@ -178,15 +235,42 @@ const PowerMonitoring: React.FC = () => {
       }
 
       const v1 = parseFloat((Math.random() * (235 - 225) + 225).toFixed(1));
-      const v2 = parseFloat((Math.random() * (225 - 215) + 215).toFixed(1));
-      const v3 = parseFloat((Math.random() * (245 - 235) + 235).toFixed(1));
+      const i1 = parseFloat((Math.random() * (50 - 30) + 30).toFixed(1));
+      const f1 = parseFloat((Math.random() * (50.10 - 49.90) + 49.90).toFixed(2));
 
+      const v2 = parseFloat((Math.random() * (225 - 215) + 215).toFixed(1));
       const i2 = parseFloat((Math.random() * (55 - 35) + 35).toFixed(1));
+      const f2 = parseFloat((Math.random() * (50.10 - 49.90) + 49.90).toFixed(2));
+
+      const v3 = parseFloat((Math.random() * (245 - 235) + 235).toFixed(1));
+      const i3 = parseFloat((Math.random() * (45 - 25) + 25).toFixed(1));
       const f3 = parseFloat((Math.random() * (50.10 - 49.90) + 49.90).toFixed(2));
 
       setM1Voltage(v1);
+      setM1Current(i1);
+      setM1Freq(f1);
+
+      setM2Voltage(v2);
       setM2Current(i2);
+      setM2Freq(f2);
+
+      setM3Voltage(v3);
+      setM3Current(i3);
       setM3Freq(f3);
+
+      // Alert Trigger Logic
+      const machineDataArr = [
+        { id: 'm1', name: 'Machine 1', v: v1, i: i1, f: f1 },
+        { id: 'm2', name: 'Machine 2', v: v2, i: i2, f: f2 },
+        { id: 'm3', name: 'Machine 3', v: v3, i: i3, f: f3 }
+      ];
+
+      machineDataArr.forEach(m => {
+        const t = thresholds[m.id as keyof typeof thresholds];
+        if (m.v > t.v) triggerAlert('High Voltage Alert', `⚠️ ${m.name} Voltage (${m.v.toFixed(1)}V) exceeded threshold (${t.v}V)`);
+        if (m.i > t.i) triggerAlert('Current Overload Alert', `⚠️ ${m.name} Current (${m.i.toFixed(1)}A) exceeded threshold (${t.i}A)`);
+        if (m.f > t.f) triggerAlert('Frequency Deviation Alert', `⚠️ ${m.name} Frequency (${m.f.toFixed(2)}Hz) exceeded threshold (${t.f}Hz)`);
+      });
 
       categories.shift();
       categories.push(Date.now());
@@ -240,7 +324,13 @@ const PowerMonitoring: React.FC = () => {
             data={{
               widgets: [
                 { title: 'Machine 1 Voltage', value: `${m1Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#4f46e5' },
+                { title: 'Machine 1 Current', value: `${m1Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#4f46e5' },
+                { title: 'Machine 1 Frequency', value: `${m1Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#4f46e5' },
+                { title: 'Machine 2 Voltage', value: `${m2Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#10b981' },
                 { title: 'Machine 2 Current', value: `${m2Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#10b981' },
+                { title: 'Machine 2 Frequency', value: `${m2Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#10b981' },
+                { title: 'Machine 3 Voltage', value: `${m3Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#f59e0b' },
+                { title: 'Machine 3 Current', value: `${m3Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#f59e0b' },
                 { title: 'Machine 3 Frequency', value: `${m3Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#f59e0b' }
               ],
               chartTitles: ['Power Factor by Machine', 'Voltage Trend (Live)'],
@@ -266,31 +356,20 @@ const PowerMonitoring: React.FC = () => {
           <NotificationBell />
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding" style={{ '--background': '#f8fafc' }}>
-        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '1rem' }}>
+      <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
+        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
           <div className="energy-title-row">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>Realtime Electrical Parameters</h2>
-            <div className="machine-selector-wrapper">
+            <div className="machine-selector-container">
               <IonSelect
                 value={selectedMachine}
-                placeholder="Select Machine"
                 onIonChange={(e) => setSelectedMachine(e.detail.value)}
                 interface="popover"
-                className="machine-select"
-                style={{
-                  '--background': '#ffffff',
-                  '--border-radius': '10px',
-                  '--padding-start': '16px',
-                  '--padding-end': '16px',
-                  'color': '#4f46e5',
-                  'font-weight': '600',
-                  'min-height': '44px',
-                  'border': '1px solid #e2e8f0',
-                  'box-shadow': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                  'width': '180px'
+                interfaceOptions={{
+                  cssClass: 'machine-selector-popover'
                 }}
+                className="machine-minimal-select"
               >
-                <IonSelectOption value="all">All Machines</IonSelectOption>
                 <IonSelectOption value="m1">Machine 1</IonSelectOption>
                 <IonSelectOption value="m2">Machine 2</IonSelectOption>
                 <IonSelectOption value="m3">Machine 3</IonSelectOption>
@@ -298,27 +377,74 @@ const PowerMonitoring: React.FC = () => {
             </div>
           </div>
 
-          <div className="energy-widgets">
-            {(selectedMachine === 'all' || selectedMachine === 'm1') && (
-              <IonCard className="widget-card" style={{ borderTop: '4px solid #4f46e5', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                <div className="widget-title" style={{ fontWeight: 600, color: '#4f46e5' }}><IonIcon icon={flashOutline} /> Machine 1 Voltage</div>
-                <div className="widget-value">{m1Voltage.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>V</span></div>
-                <div className="widget-sub">Line voltage snapshot</div>
-              </IonCard>
+          <div className="machine-groups-list" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {selectedMachine === 'm1' && (
+              <div className="machine-section">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#4f46e5', marginBottom: '1rem', paddingLeft: '0.5rem' }}>Machine 1</h3>
+                <div className="energy-widgets">
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #4f46e5', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#4f46e5' }}><IonIcon icon={flashOutline} /> Machine 1 Voltage</div>
+                    <div className="widget-value">{m1Voltage.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>V</span></div>
+                    <div className="widget-sub">Line voltage snapshot</div>
+                  </IonCard>
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #4f46e5', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#4f46e5' }}><IonIcon icon={pulseOutline} /> Machine 1 Current</div>
+                    <div className="widget-value">{m1Current.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>A</span></div>
+                    <div className="widget-sub">Load draw monitoring</div>
+                  </IonCard>
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #4f46e5', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#4f46e5' }}><IonIcon icon={speedometerOutline} /> Machine 1 Frequency</div>
+                    <div className="widget-value">{m1Freq.toFixed(2)} <span style={{ fontSize: '1rem', color: '#64748b' }}>Hz</span></div>
+                    <div className="widget-sub">Grid stability check</div>
+                  </IonCard>
+                </div>
+              </div>
             )}
-            {(selectedMachine === 'all' || selectedMachine === 'm2') && (
-              <IonCard className="widget-card" style={{ borderTop: '4px solid #10b981', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                <div className="widget-title" style={{ fontWeight: 600, color: '#10b981' }}><IonIcon icon={pulseOutline} /> Machine 2 Current</div>
-                <div className="widget-value">{m2Current.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>A</span></div>
-                <div className="widget-sub">Load draw monitoring</div>
-              </IonCard>
+
+            {selectedMachine === 'm2' && (
+              <div className="machine-section">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981', marginBottom: '1rem', paddingLeft: '0.5rem' }}>Machine 2</h3>
+                <div className="energy-widgets">
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #10b981', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#10b981' }}><IonIcon icon={flashOutline} /> Machine 2 Voltage</div>
+                    <div className="widget-value">{m2Voltage.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>V</span></div>
+                    <div className="widget-sub">Line voltage snapshot</div>
+                  </IonCard>
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #10b981', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#10b981' }}><IonIcon icon={pulseOutline} /> Machine 2 Current</div>
+                    <div className="widget-value">{m2Current.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>A</span></div>
+                    <div className="widget-sub">Load draw monitoring</div>
+                  </IonCard>
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #10b981', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#10b981' }}><IonIcon icon={speedometerOutline} /> Machine 2 Frequency</div>
+                    <div className="widget-value">{m2Freq.toFixed(2)} <span style={{ fontSize: '1rem', color: '#64748b' }}>Hz</span></div>
+                    <div className="widget-sub">Grid stability check</div>
+                  </IonCard>
+                </div>
+              </div>
             )}
-            {(selectedMachine === 'all' || selectedMachine === 'm3') && (
-              <IonCard className="widget-card" style={{ borderTop: '4px solid #f59e0b', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                <div className="widget-title" style={{ fontWeight: 600, color: '#f59e0b' }}><IonIcon icon={speedometerOutline} /> Machine 3 Frequency</div>
-                <div className="widget-value">{m3Freq.toFixed(2)} <span style={{ fontSize: '1rem', color: '#64748b' }}>Hz</span></div>
-                <div className="widget-sub">Grid stability check</div>
-              </IonCard>
+
+            {selectedMachine === 'm3' && (
+              <div className="machine-section">
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f59e0b', marginBottom: '1rem', paddingLeft: '0.5rem' }}>Machine 3</h3>
+                <div className="energy-widgets">
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #f59e0b', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#f59e0b' }}><IonIcon icon={flashOutline} /> Machine 3 Voltage</div>
+                    <div className="widget-value">{m3Voltage.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>V</span></div>
+                    <div className="widget-sub">Line voltage snapshot</div>
+                  </IonCard>
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #f59e0b', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#f59e0b' }}><IonIcon icon={pulseOutline} /> Machine 3 Current</div>
+                    <div className="widget-value">{m3Current.toFixed(1)} <span style={{ fontSize: '1rem', color: '#64748b' }}>A</span></div>
+                    <div className="widget-sub">Load draw monitoring</div>
+                  </IonCard>
+                  <IonCard className="widget-card" style={{ borderTop: '4px solid #f59e0b', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <div className="widget-title" style={{ fontWeight: 600, color: '#f59e0b' }}><IonIcon icon={speedometerOutline} /> Machine 3 Frequency</div>
+                    <div className="widget-value">{m3Freq.toFixed(2)} <span style={{ fontSize: '1rem', color: '#64748b' }}>Hz</span></div>
+                    <div className="widget-sub">Grid stability check</div>
+                  </IonCard>
+                </div>
+              </div>
             )}
           </div>
 

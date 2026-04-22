@@ -96,32 +96,28 @@ const ShiftProduction: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       
-      <IonContent fullscreen className="ion-padding" style={{ '--background': '#f8fafc' }}>
-        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '1rem' }}>
+      <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
+        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
           <div className="energy-title-row">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>Shift Energy Summary</h2>
 
-            <IonItem
-              lines="none"
-              style={{
-                '--background': 'transparent',
-                margin: 0,
-                padding: 0,
-                minWidth: '160px',
-              } as React.CSSProperties}
-            >
-              <IonLabel style={{ fontSize: '0.9rem', color: '#64748b' }}>Shift</IonLabel>
+            <div className="machine-selector-container">
+              <span className="machine-label-text">Shift</span>
               <IonSelect
                 value={selectedShift}
                 interface="popover"
+                interfaceOptions={{
+                  cssClass: 'machine-selector-popover'
+                }}
                 onIonChange={(e) => setSelectedShift(e.detail.value)}
+                className="machine-minimal-select"
               >
                 <IonSelectOption value="General">General</IonSelectOption>
                 <IonSelectOption value="1st shift">1st shift</IonSelectOption>
                 <IonSelectOption value="2nd shift">2nd shift</IonSelectOption>
                 <IonSelectOption value="3rd shift">3rd shift</IonSelectOption>
               </IonSelect>
-            </IonItem>
+            </div>
           </div>
 
           <div className="energy-widgets">

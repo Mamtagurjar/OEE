@@ -14,11 +14,14 @@ import {
   IonModal,
   IonInput,
   IonTextarea,
-  IonItem,
   IonLabel,
-  IonButton
+  IonButton,
+  IonSelect,
+  IonSelectOption,
+  IonItem
 } from '@ionic/react';
-import { warningOutline, flashOutline, alertCircleOutline, checkmarkCircleOutline, addOutline, closeOutline } from 'ionicons/icons';
+import { useEffect } from 'react';
+import { warningOutline, flashOutline, alertCircleOutline, checkmarkCircleOutline, addOutline, closeOutline, settingsOutline } from 'ionicons/icons';
 import '../components/EnergyConsumption.css';
 import PdfDownloadControl from '../components/PdfDownloadControl';
 import NotificationBell from '../components/NotificationBell';
@@ -38,39 +41,7 @@ const SystemAlerts: React.FC = () => {
   const [selectedRangeLabel, setSelectedRangeLabel] = useState('5 min');
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
-  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
-  const [alertTitle, setAlertTitle] = useState('');
-  const [alertMessage, setAlertMessage] = useState('');
-
-  const [customAlerts, setCustomAlerts] = useState<CustomAlertItem[]>(() => {
-    try {
-      const raw = localStorage.getItem('oee.custom.alerts.v1');
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    return [];
-  });
-
-  const handleCreateAlert = () => {
-    if (!alertTitle.trim() || !alertMessage.trim()) return;
-    
-    const newAlert: CustomAlertItem = {
-      id: `custom-alert-${Date.now()}`,
-      title: alertTitle.trim(),
-      message: alertMessage.trim(),
-      createdAt: Date.now()
-    };
-    
-    const updated = [newAlert, ...customAlerts];
-    setCustomAlerts(updated);
-    
-    try {
-      localStorage.setItem('oee.custom.alerts.v1', JSON.stringify(updated));
-    } catch {}
-
-    setAlertTitle('');
-    setAlertMessage('');
-    setIsAlertModalOpen(false);
-  };
+  const [isThresholdModalOpen, setIsThresholdModalOpen] = useState(false);
 
   const handleSelectRange = (
     range: string,
@@ -80,6 +51,36 @@ const SystemAlerts: React.FC = () => {
     setSelectedRange(range);
     setSelectedRangeLabel(label);
     setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
+  };
+
+  // Machine Alert Thresholds State
+  const [alertMachine, setAlertMachine] = useState('m1');
+  const [thresholds, setThresholds] = useState(() => {
+    const saved = localStorage.getItem('power_thresholds');
+    return saved ? JSON.parse(saved) : {
+      m1: { v: 250, i: 50, f: 50 },
+      m2: { v: 250, i: 50, f: 50 },
+      m3: { v: 250, i: 50, f: 50 }
+    };
+  });
+
+  const [inputV, setInputV] = useState(thresholds[alertMachine].v);
+  const [inputI, setInputI] = useState(thresholds[alertMachine].i);
+  const [inputF, setInputF] = useState(thresholds[alertMachine].f);
+
+  useEffect(() => {
+    setInputV(thresholds[alertMachine].v);
+    setInputI(thresholds[alertMachine].i);
+    setInputF(thresholds[alertMachine].f);
+  }, [alertMachine, thresholds]);
+
+  const handleUpdateThresholds = () => {
+    const updated = {
+      ...thresholds,
+      [alertMachine]: { v: Number(inputV), i: Number(inputI), f: Number(inputF) }
+    };
+    setThresholds(updated);
+    localStorage.setItem('power_thresholds', JSON.stringify(updated));
   };
 
   const alerts = useMemo(() => {
@@ -157,8 +158,8 @@ const SystemAlerts: React.FC = () => {
           <NotificationBell />
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding" style={{ '--background': '#f8fafc' }}>
-        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '1rem' }}>
+      <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
+        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
           
           <div className="energy-title-row" style={{ justifyContent: 'flex-start' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>Anomaly Detection</h2>
@@ -184,38 +185,19 @@ const SystemAlerts: React.FC = () => {
 
           <div style={{ marginTop: '2.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>Custom Alerts</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>System Anomaly Monitoring</h3>
               <IonButton 
                 size="small" 
                 fill="solid" 
                 shape="round" 
                 color="primary"
-                onClick={() => setIsAlertModalOpen(true)}
+                onClick={() => setIsThresholdModalOpen(true)}
                 style={{ '--box-shadow': '0 4px 10px rgba(79, 70, 229, 0.2)', fontWeight: 600 }}
               >
-                <IonIcon slot="start" icon={addOutline} />
-                Custom alert
+                <IonIcon slot="start" icon={settingsOutline} />
+                Custom Alerts
               </IonButton>
             </div>
-            {customAlerts.length === 0 ? (
-               <p style={{ color: '#64748b' }}>No custom alerts have been created.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {customAlerts.map(alert => (
-                  <IonCard key={alert.id} className="widget-card" style={{ margin: 0, padding: '1rem 1.5rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #4f46e5' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1.05rem', marginBottom: '0.2rem' }}>
-                        {alert.title}
-                      </div>
-                      <div style={{ color: '#64748b', fontSize: '0.9rem' }}>{alert.message}</div>
-                    </div>
-                    <div style={{ color: '#94a3b8', fontSize: '0.85rem', flexShrink: 0 }}>
-                      {new Date(alert.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </IonCard>
-                ))}
-              </div>
-            )}
           </div>
 
           <div style={{ marginTop: '2rem' }}>
@@ -246,57 +228,99 @@ const SystemAlerts: React.FC = () => {
           </div>
 
         </div>
+
         <IonModal 
-          isOpen={isAlertModalOpen} 
-          onDidDismiss={() => setIsAlertModalOpen(false)} 
+          isOpen={isThresholdModalOpen} 
+          onDidDismiss={() => setIsThresholdModalOpen(false)} 
           breakpoints={[0, 0.85, 1]} 
           initialBreakpoint={0.85}
           handleBehavior="cycle"
         >
           <IonHeader className="ion-no-border">
             <IonToolbar>
-              <IonTitle>Post Custom Alert</IonTitle>
+              <IonTitle>Configuration Thresholds</IonTitle>
               <IonButtons slot="end">
-                <IonButton onClick={() => setIsAlertModalOpen(false)}><IonIcon icon={closeOutline} size="large" /></IonButton>
+                <IonButton onClick={() => setIsThresholdModalOpen(false)}><IonIcon icon={closeOutline} size="large" /></IonButton>
               </IonButtons>
             </IonToolbar>
           </IonHeader>
-          <IonContent className="ion-padding">
-            <p style={{ color: 'var(--ion-color-step-600)', marginBottom: '1.5rem', marginTop: 0 }}>
-              Use this tool to manually broadcast a network-wide system alert that will instantly propagate to the notifications center.
-            </p>
-            <IonItem style={{ marginBottom: '1.25rem', '--border-radius': '8px', '--padding-top': '8px', '--padding-bottom': '8px' }}>
-              <IonLabel position="floating">Alert Title</IonLabel>
-              <IonInput 
-                value={alertTitle} 
-                onIonInput={(e) => setAlertTitle(e.detail.value!)} 
-                placeholder="E.g., Component Failure" 
-                clearInput
-                style={{ marginTop: '4px' }}
-              />
-            </IonItem>
-            <IonItem style={{ marginBottom: '1rem', '--border-radius': '8px', '--padding-top': '8px', '--padding-bottom': '8px' }}>
-              <IonLabel position="floating">Incident Details</IonLabel>
-              <IonTextarea 
-                value={alertMessage} 
-                onIonInput={(e) => setAlertMessage(e.detail.value!)} 
-                placeholder="Provide metric thresholds or relevant context" 
-                rows={4}
-                style={{ marginTop: '4px' }}
-              />
-            </IonItem>
-            
-            <div style={{ marginTop: '1.5rem', paddingBottom: '2rem' }}>
-              <IonButton 
-                expand="block" 
-                shape="round" 
-                color="primary" 
-                onClick={handleCreateAlert} 
-                disabled={!alertTitle.trim() || !alertMessage.trim()} 
-                style={{ fontWeight: 600, height: '48px', margin: 0, '--box-shadow': '0 4px 12px rgba(79, 70, 229, 0.3)' }}
-              >
-                Publish Notification
-              </IonButton>
+          <IonContent className="ion-padding" style={{ '--background': '#ffffff' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0 }}>
+                Set safety limits for each machine. Automatically triggers a notification when live telemetry exceeds these values.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>Machine Selector</label>
+                <IonSelect
+                  value={alertMachine}
+                  onIonChange={e => setAlertMachine(e.detail.value)}
+                  interface="popover"
+                  interfaceOptions={{
+                    cssClass: 'machine-selector-popover'
+                  }}
+                  style={{
+                    '--background': '#ffffff',
+                    'border': '1px solid #e2e8f0',
+                    'border-radius': '10px',
+                    'padding': '4px 12px',
+                    'width': '100%',
+                    'font-weight': '600'
+                  }}
+                >
+                  <IonSelectOption value="m1">Machine 1</IonSelectOption>
+                  <IonSelectOption value="m2">Machine 2</IonSelectOption>
+                  <IonSelectOption value="m3">Machine 3</IonSelectOption>
+                </IonSelect>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>Voltage (V)</label>
+                  <input
+                    type="number"
+                    value={inputV}
+                    onChange={e => setInputV(e.target.value)}
+                    style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>Current (A)</label>
+                  <input
+                    type="number"
+                    value={inputI}
+                    onChange={e => setInputI(e.target.value)}
+                    style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>Frequency (Hz)</label>
+                <input
+                  type="number"
+                  value={inputF}
+                  onChange={e => setInputF(e.target.value)}
+                  style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
+                />
+              </div>
+
+              <div style={{ marginTop: '1rem', paddingBottom: '2.5rem' }}>
+                <IonButton 
+                  expand="block" 
+                  shape="round" 
+                  color="primary" 
+                  onClick={() => {
+                    handleUpdateThresholds();
+                    setIsThresholdModalOpen(false);
+                  }}
+                  style={{ fontWeight: 700, height: '48px', '--box-shadow': '0 4px 12px rgba(79, 70, 229, 0.3)' }}
+                >
+                  Save Performance Limits
+                </IonButton>
+              </div>
             </div>
           </IonContent>
         </IonModal>

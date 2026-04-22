@@ -183,8 +183,8 @@ const MachineComparison: React.FC = () => {
           <NotificationBell />
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding" style={{ '--background': '#f8fafc' }}>
-        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '1rem' }}>
+      <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
+        <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
           
           <div className="energy-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>System Analytics</h2>

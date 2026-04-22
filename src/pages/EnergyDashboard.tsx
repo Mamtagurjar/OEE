@@ -80,7 +80,7 @@ const EnergyDashboard: React.FC = () => {
           <NotificationBell />
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent>
         <div ref={contentRef}>
           <EnergyConsumption
             selectedRange={selectedRange}

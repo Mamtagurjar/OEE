@@ -2,8 +2,7 @@
 .energy-page-wrapper {
     background-color: #f8fafc;
     color: #1f2937;
-    padding: 1.5rem;
-    /* min-height: 100vh; */
+    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
 }
 
 .energy-inner {
@@ -37,13 +36,61 @@
     }
 }
 
-.machine-select {
-    --placeholder-color: #4f46e5;
-    --placeholder-opacity: 1;
+.machine-selector-container {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 2px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: transparent;
 }
 
-.machine-select::part(container) {
-    border-radius: 10px;
+.machine-selector-container:hover {
+    background-color: #f1f5f9;
+}
+
+.machine-label-text {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.machine-minimal-select {
+    --padding-start: 4px;
+    --padding-end: 0;
+    --padding-top: 4px;
+    --padding-bottom: 4px;
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    min-height: auto;
+    --border-style: none;
+    --box-shadow: none;
+    --inner-border-width: 0;
+    --highlight-height: 0;
+    --highlight-color-focused: transparent;
+    --highlight-color-valid: transparent;
+    --highlight-color-invalid: transparent;
+}
+
+.machine-minimal-select::part(icon) {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+/* Machine Selector Popover Width */
+.machine-selector-popover {
+    --width: 130px;
+}
+
+.machine-selector-popover ion-item {
+    --padding-start: 12px;
+    --inner-padding-end: 12px;
+    --min-height: 36px;
+    font-size: 0.9rem;
 }
 
 .time-range-button {

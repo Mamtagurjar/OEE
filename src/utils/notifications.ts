@@ -9,10 +9,35 @@ const STORAGE_KEY = 'oee.notifications.readIds.v1';
 
 const getNow = (): number => Date.now();
 
-// Minimal seeded/demo notifications. Replace with API later.
+const DYNAMIC_STORAGE_KEY = 'oee.notifications.dynamic.v1';
+
+export const triggerAlert = (title: string, message: string): void => {
+  try {
+    const raw = localStorage.getItem(DYNAMIC_STORAGE_KEY);
+    const existing: NotificationItem[] = raw ? JSON.parse(raw) : [];
+    const newItem: NotificationItem = {
+      id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      title,
+      message,
+      createdAt: Date.now(),
+    };
+    // Keep only last 50 for performance
+    const updated = [newItem, ...existing].slice(0, 50);
+    localStorage.setItem(DYNAMIC_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to trigger alert', e);
+  }
+};
+
 export const getAllNotifications = (): NotificationItem[] => {
+  let dynamic: NotificationItem[] = [];
+  try {
+    const raw = localStorage.getItem(DYNAMIC_STORAGE_KEY);
+    if (raw) dynamic = JSON.parse(raw);
+  } catch {}
+
   const now = getNow();
-  return [
+  const staticItems = [
     {
       id: 'sys-001',
       title: 'System Alerts',
@@ -31,7 +56,9 @@ export const getAllNotifications = (): NotificationItem[] => {
       message: 'Efficiency report is ready for export.',
       createdAt: now - 26 * 60 * 60 * 1000,
     },
-  ].sort((a, b) => b.createdAt - a.createdAt);
+  ];
+
+  return [...dynamic, ...staticItems].sort((a, b) => b.createdAt - a.createdAt);
 };
 
 export const getReadIds = (): Set<string> => {
