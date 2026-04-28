@@ -62,13 +62,13 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ markReadOnOpen = tr
 
   const renderNotification = (item: NotificationItem) => {
     const isUnread = sessionUnreadIds.has(item.id) || !readSet.has(item.id);
-    
+
     return (
       <IonItem key={item.id} detail={false} lines="inset" style={{ '--padding-start': '0', '--inner-padding-end': '0', width: '100%', overflowX: 'hidden' }}>
         <IonLabel className="ion-text-wrap" style={{ padding: '8px 4px', margin: 0, width: '100%', overflowX: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
             <div style={{ fontWeight: isUnread ? 800 : 600, fontSize: '0.95rem', color: isUnread ? 'var(--ion-color-primary)' : 'inherit', whiteSpace: 'normal', wordBreak: 'break-word', paddingRight: '8px' }}>
-               {item.title}
+              {item.title}
             </div>
             {isUnread && (
               <div style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: 'var(--ion-color-primary)', marginTop: 6, flexShrink: 0 }} />
@@ -135,9 +135,9 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ markReadOnOpen = tr
         side="bottom"
         alignment="end"
         backdropDismiss={true}
-        style={{ '--width': '320px' }}
+        style={{ '--width': '250px' }}
       >
-        <div style={{ width: '100%', padding: '16px 12px', overflowX: 'hidden', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', padding: '16px 12px', overflowX: 'hidden', boxSizing: 'border-box', minWidth: '250px !important', maxWidth: '250px !important' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontWeight: 900, fontSize: '1.05rem', color: 'var(--ion-text-color)' }}>Notifications</div>
             <div style={{ fontSize: '0.8rem', color: 'var(--ion-color-step-600)', fontWeight: 700 }}>
@@ -165,11 +165,11 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ markReadOnOpen = tr
             `}
           </style>
 
-          <div 
+          <div
             className="notification-scroll-container"
-            style={{ 
-              maxHeight: '380px', 
-              overflowY: 'auto', 
+            style={{
+              maxHeight: '380px',
+              overflowY: 'auto',
               overflowX: 'hidden',
               marginTop: 10,
               paddingRight: 4 // Space for the scrollbar
