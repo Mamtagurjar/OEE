@@ -8,13 +8,13 @@ import {
   IonTitle,
   IonToolbar,
   IonCard,
-  IonIcon,
-  IonSelect,
-  IonSelectOption
+  IonIcon
 } from '@ionic/react';
 import { flashOutline, speedometerOutline, pulseOutline } from 'ionicons/icons';
 import ApexCharts from 'apexcharts';
 import '../components/EnergyConsumption.css';
+import '../components/CustomSelect.css';
+import SearchableDropdown from '../components/SearchableDropdown';
 import PdfDownloadControl from '../components/PdfDownloadControl';
 import NotificationBell from '../components/NotificationBell';
 import { getTimeRangeTotalMinutes, makeSeededRandom, type CustomRange } from '../utils/timeRange';
@@ -43,6 +43,12 @@ const PowerMonitoring: React.FC = () => {
   const pfRef = useRef<[number, number, number]>([0.92, 0.88, 0.95]);
 
   const [selectedMachine, setSelectedMachine] = useState('m1');
+
+  const machineOptions = [
+    { value: 'm1', label: 'Machine 1' },
+    { value: 'm2', label: 'Machine 2' },
+    { value: 'm3', label: 'Machine 3' },
+  ];
 
   // Custom Alerts State
   const [alertMachine, setAlertMachine] = useState('m1');
@@ -361,19 +367,13 @@ const PowerMonitoring: React.FC = () => {
           <div className="energy-title-row">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>Realtime Electrical Parameters</h2>
             <div className="machine-selector-container">
-              <IonSelect
+              <SearchableDropdown
                 value={selectedMachine}
-                onIonChange={(e) => setSelectedMachine(e.detail.value)}
-                interface="popover"
-                interfaceOptions={{
-                  cssClass: 'machine-selector-popover'
-                }}
-                className="machine-minimal-select"
-              >
-                <IonSelectOption value="m1">Machine 1</IonSelectOption>
-                <IonSelectOption value="m2">Machine 2</IonSelectOption>
-                <IonSelectOption value="m3">Machine 3</IonSelectOption>
-              </IonSelect>
+                options={machineOptions}
+                onChange={setSelectedMachine}
+                placeholder="-- Select --"
+                ariaLabel="Select machine"
+              />
             </div>
           </div>
 

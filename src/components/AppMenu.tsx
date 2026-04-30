@@ -23,13 +23,16 @@ import {
   constructOutline
 } from 'ionicons/icons';
 import './AppMenu.css';
-import { clearSession } from '../auth/auth';
+import { clearSession, UserRole } from '../auth/auth';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { logout } from '../redux/slices/authSlice';
 
 interface AppPage {
   url: string;
   iosIcon: string;
   mdIcon: string;
   title: string;
+  allowedRoles?: UserRole[];
 }
 
 const appPages: AppPage[] = [
@@ -67,20 +70,27 @@ const appPages: AppPage[] = [
     title: 'Maintenance Log',
     url: '/maintenance',
     iosIcon: constructOutline,
-    mdIcon: constructOutline
+    mdIcon: constructOutline,
+    allowedRoles: ['admin'],
   },
   {
     title: 'System Alerts',
     url: '/alerts',
     iosIcon: warningOutline,
-    mdIcon: warningOutline
+    mdIcon: warningOutline,
+    allowedRoles: ['admin'],
   }
 ];
 
 const AppMenu: React.FC = () => {
   const location = useLocation();
   const history = useHistory();
+  const dispatch = useAppDispatch();
+  const userRole = useAppSelector((state) => state.auth.user?.role);
   const [presentAlert] = useIonAlert();
+  const visiblePages = appPages.filter(
+    (page) => !page.allowedRoles || (userRole ? page.allowedRoles.includes(userRole) : false),
+  );
 
   const handleLogout = () => {
     presentAlert({
@@ -96,7 +106,8 @@ const AppMenu: React.FC = () => {
           role: 'confirm',
           handler: () => {
             clearSession();
-            history.push('/login');
+            dispatch(logout());
+            history.replace('/login');
           },
         },
       ],
@@ -112,7 +123,7 @@ const AppMenu: React.FC = () => {
         </div>
 
         <IonList className="menu-content-list" lines="none">
-          {appPages.map((appPage, index) => {
+          {visiblePages.map((appPage, index) => {
             const isActive = location.pathname.startsWith(appPage.url);
             return (
               <IonMenuToggle key={index} autoHide={false}>

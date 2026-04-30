@@ -13,11 +13,15 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   LoginFormData,
-  getActiveUser,
-  initializeUsers,
   loginUser,
   validateLogin,
 } from '../auth/auth';
+import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import {
+  clearAuthError,
+  loginFailure,
+  loginSuccess,
+} from '../redux/slices/authSlice';
 import './Auth.css';
 
 type StatusTone = 'success' | 'error' | 'neutral';
@@ -29,6 +33,9 @@ interface StatusMessage {
 
 const Login: React.FC = () => {
   const history = useHistory();
+  const dispatch = useAppDispatch();
+  const authError = useAppSelector((state) => state.auth.error);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [loginData, setLoginData] = useState<LoginFormData>({
@@ -40,26 +47,31 @@ const Login: React.FC = () => {
   >({});
 
   useEffect(() => {
-    initializeUsers();
+    dispatch(clearAuthError());
+  }, [dispatch]);
 
-    if (getActiveUser()) {
+  useEffect(() => {
+    if (isAuthenticated) {
       history.replace('/dashboard');
     }
-  }, [history]);
+  }, [history, isAuthenticated]);
 
   const errors = useMemo(() => validateLogin(loginData), [loginData]);
   const hasErrors = Object.keys(errors).length > 0;
+  const activeStatus =
+    status ?? (authError ? { tone: 'error', text: authError } : null);
 
   const statusColor =
-    status?.tone === 'error'
+    activeStatus?.tone === 'error'
       ? 'danger'
-      : status?.tone === 'success'
+      : activeStatus?.tone === 'success'
         ? 'success'
         : 'medium';
 
   const setField = (field: keyof LoginFormData, value: string): void => {
     setLoginData((prev) => ({ ...prev, [field]: value }));
     setStatus(null);
+    dispatch(clearAuthError());
   };
 
   const markTouched = (field: keyof LoginFormData): void => {
@@ -71,20 +83,18 @@ const Login: React.FC = () => {
     setTouched({ email: true, password: true });
 
     if (hasErrors) {
+      dispatch(clearAuthError());
       setStatus({ tone: 'error', text: 'Please fix the highlighted fields.' });
       return;
     }
 
     const result = loginUser(loginData);
     if (!result.ok) {
-      setStatus({ tone: 'error', text: result.message });
+      dispatch(loginFailure(result.message));
       return;
     }
 
-    setStatus({
-      tone: 'success',
-      text: `Welcome, ${result.user.name}!`,
-    });
+    dispatch(loginSuccess(result.user));
     history.push('/dashboard');
   };
 
@@ -155,9 +165,9 @@ const Login: React.FC = () => {
               </div>
             </form>
 
-            {status ? (
+            {activeStatus ? (
               <IonText color={statusColor} className="status-text text-center">
-                {status.text}
+                {activeStatus.text}
               </IonText>
             ) : null}
 
@@ -180,4 +190,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

@@ -1,4 +1,5 @@
 export type AuthMode = 'login' | 'signup';
+export type UserRole = 'admin' | 'operator';
 
 export interface LoginFormData {
   email: string;
@@ -22,12 +23,14 @@ export interface StoredUser {
   name: string;
   email: string;
   password: string;
+  role: UserRole;
 }
 
 export type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
 const USERS_STORAGE_KEY = 'ionic_demo_users';
 const SESSION_STORAGE_KEY = 'ionic_demo_session_email';
+const DEFAULT_SIGNUP_ROLE: UserRole = 'operator';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
@@ -36,22 +39,33 @@ export const DEMO_USER: StoredUser = {
   name: 'Demo User',
   email: 'demo@gmail.com',
   password: 'demo@123',
+  role: 'admin',
 };
 
 export const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
-const isStoredUser = (value: unknown): value is StoredUser => {
+const toStoredUser = (value: unknown): StoredUser | null => {
   if (typeof value !== 'object' || value === null) {
-    return false;
+    return null;
   }
 
   const entry = value as Record<string, unknown>;
+  if (
+    typeof entry.name !== 'string' ||
+    typeof entry.email !== 'string' ||
+    typeof entry.password !== 'string'
+  ) {
+    return null;
+  }
 
-  return (
-    typeof entry.name === 'string' &&
-    typeof entry.email === 'string' &&
-    typeof entry.password === 'string'
-  );
+  const role: UserRole = entry.role === 'admin' ? 'admin' : DEFAULT_SIGNUP_ROLE;
+
+  return {
+    name: entry.name,
+    email: normalizeEmail(entry.email),
+    password: entry.password,
+    role,
+  };
 };
 
 const withDemoUser = (users: StoredUser[]): StoredUser[] => {
@@ -75,11 +89,8 @@ export const readUsers = (): StoredUser[] => {
     }
 
     const safeUsers = parsedValue
-      .filter(isStoredUser)
-      .map((user) => ({
-        ...user,
-        email: normalizeEmail(user.email),
-      }));
+      .map(toStoredUser)
+      .filter((user): user is StoredUser => user !== null);
 
     return safeUsers.length > 0 ? safeUsers : [DEMO_USER];
   } catch {
@@ -248,11 +259,27 @@ export const signupUser = (data: SignupFormData): SignupResult => {
     name: data.fullName.trim(),
     email: normalizeEmail(data.email),
     password: data.password,
+    role: DEFAULT_SIGNUP_ROLE,
   };
 
   writeUsers([...users, newUser]);
 
   return { ok: true, user: newUser };
+};
+
+export const hasRequiredRole = (
+  user: StoredUser | null,
+  allowedRoles?: UserRole[],
+): boolean => {
+  if (!user) {
+    return false;
+  }
+
+  if (!allowedRoles || allowedRoles.length === 0) {
+    return true;
+  }
+
+  return allowedRoles.includes(user.role);
 };
 
 export type ForgotPasswordResult =

@@ -12,12 +12,12 @@ import {
   IonItem,
   IonLabel,
   IonProgressBar,
-  IonSelect,
-  IonSelectOption,
   IonIcon
 } from '@ionic/react';
 import { flashOutline, speedometerOutline, pulseOutline } from 'ionicons/icons';
 import '../components/EnergyConsumption.css';
+import '../components/CustomSelect.css';
+import SearchableDropdown from '../components/SearchableDropdown';
 import PdfDownloadControl from '../components/PdfDownloadControl';
 import NotificationBell from '../components/NotificationBell';
 import { getTimeRangeTotalMinutes, makeSeededRandom, type CustomRange } from '../utils/timeRange';
@@ -30,6 +30,13 @@ const ShiftProduction: React.FC = () => {
   const [customRange, setCustomRange] = useState<CustomRange | null>(null);
 
   const [selectedShift, setSelectedShift] = useState<'General' | '1st shift' | '2nd shift' | '3rd shift'>('General');
+
+  const shiftOptions = [
+    { value: 'General', label: 'General' },
+    { value: '1st shift', label: '1st shift' },
+    { value: '2nd shift', label: '2nd shift' },
+    { value: '3rd shift', label: '3rd shift' },
+  ];
 
   const handleSelectRange = (
     range: string,
@@ -102,21 +109,15 @@ const ShiftProduction: React.FC = () => {
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>Shift Energy Summary</h2>
 
             <div className="machine-selector-container">
-              <span className="machine-label-text">Shift</span>
-              <IonSelect
+              <SearchableDropdown
                 value={selectedShift}
-                interface="popover"
-                interfaceOptions={{
-                  cssClass: 'machine-selector-popover'
-                }}
-                onIonChange={(e) => setSelectedShift(e.detail.value)}
-                className="machine-minimal-select"
-              >
-                <IonSelectOption value="General">General</IonSelectOption>
-                <IonSelectOption value="1st shift">1st shift</IonSelectOption>
-                <IonSelectOption value="2nd shift">2nd shift</IonSelectOption>
-                <IonSelectOption value="3rd shift">3rd shift</IonSelectOption>
-              </IonSelect>
+                options={shiftOptions}
+                onChange={(value) =>
+                  setSelectedShift(value as 'General' | '1st shift' | '2nd shift' | '3rd shift')
+                }
+                placeholder="-- Select --"
+                ariaLabel="Select shift"
+              />
             </div>
           </div>
 
