@@ -1,63 +1,54 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonCard,
-  IonIcon
-} from '@ionic/react';
+import { IonContent, IonPage, IonCard, IonIcon } from '@ionic/react';
 import { barChartOutline, speedometerOutline } from 'ionicons/icons';
 import ApexCharts from 'apexcharts';
 import '../components/EnergyConsumption.css';
-import PdfDownloadControl from '../components/PdfDownloadControl';
-import NotificationBell from '../components/NotificationBell';
+import PageToolbar from '../components/PageToolbar';
 import { makeSeededRandom } from '../utils/timeRange';
 
 const MachineComparison: React.FC = () => {
   const barChartRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const [selectedRange, setSelectedRange] = useState("5m");
-  const [selectedRangeLabel, setSelectedRangeLabel] = useState("5 min");
-  const [customRange, setCustomRange] = useState<{start: string, end: string} | null>(null);
+  const [selectedRange, setSelectedRange] = useState('5m');
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState('5 min');
+  const [customRange, setCustomRange] = useState<{ start: string; end: string } | null>(null);
 
   const handleSelectRange = (
     range: string,
     label: string,
-    selectedCustomRange?: {start: string, end: string}
+    selectedCustomRange?: { start: string; end: string }
   ) => {
     setSelectedRange(range);
     setSelectedRangeLabel(label);
-    setCustomRange(range === "custom" && selectedCustomRange ? selectedCustomRange : null);
+    setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
   };
 
   useEffect(() => {
     let comparisonChart: ApexCharts | null = null;
-    
-    let stepMs = 60000; 
+
+    let stepMs = 60000;
     let pointCount = 6;
-    
-    switch(selectedRange) {
+
+    switch (selectedRange) {
       case '5m': stepMs = 60000; pointCount = 6; break;
       case '30m': stepMs = 5 * 60000; pointCount = 7; break;
       case '6h': stepMs = 60 * 60000; pointCount = 7; break;
       case '12h': stepMs = 2 * 60 * 60000; pointCount = 7; break;
       case '24h': stepMs = 4 * 60 * 60000; pointCount = 7; break;
-      case 'thisWeek': case 'lastWeek': stepMs = 24 * 60 * 60000; pointCount = 7; break;
-      case 'thisMonth': case 'lastMonth': stepMs = 5 * 24 * 60 * 60000; pointCount = 7; break;
+      case 'thisWeek':
+      case 'lastWeek': stepMs = 24 * 60 * 60000; pointCount = 7; break;
+      case 'thisMonth':
+      case 'lastMonth': stepMs = 5 * 24 * 60 * 60000; pointCount = 7; break;
       case 'custom':
         if (customRange) {
-            const s = new Date(customRange.start).getTime();
-            const e = new Date(customRange.end).getTime();
-            stepMs = Math.max(60000, (e - s) / 6);
-            pointCount = 7;
+          const s = new Date(customRange.start).getTime();
+          const e = new Date(customRange.end).getTime();
+          stepMs = Math.max(60000, (e - s) / 6);
+          pointCount = 7;
         }
         break;
-      default: stepMs = 60000; pointCount = 6; 
+      default: stepMs = 60000; pointCount = 6;
     }
 
     const categories: number[] = [];
@@ -65,24 +56,24 @@ const MachineComparison: React.FC = () => {
     const dataM2: number[] = [];
     const dataM3: number[] = [];
     const now = Date.now();
-    
-    let xAxisFormat = "HH:mm";
+
+    let xAxisFormat = 'HH:mm';
     if (['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'].includes(selectedRange)) {
-        xAxisFormat = "dd MMM";
+      xAxisFormat = 'dd MMM';
     } else if (selectedRange === 'custom' && customRange) {
-        const diffMs = new Date(customRange.end).getTime() - new Date(customRange.start).getTime();
-        if (diffMs > 24 * 60 * 60 * 1000) xAxisFormat = "dd MMM";
+      const diffMs = new Date(customRange.end).getTime() - new Date(customRange.start).getTime();
+      if (diffMs > 24 * 60 * 60 * 1000) xAxisFormat = 'dd MMM';
     }
-    
+
     const rng = makeSeededRandom(`${selectedRange}|${customRange?.start ?? ''}`);
-    
+
     for (let i = pointCount - 1; i >= 0; i--) {
       categories.push(now - i * stepMs);
-      dataM1.push(parseFloat((rng() * (85 - 65) + 65).toFixed(1))); // kW
-      dataM2.push(parseFloat((rng() * (110 - 80) + 80).toFixed(1))); // kW
-      dataM3.push(parseFloat((rng() * (75 - 55) + 55).toFixed(1))); // kW
+      dataM1.push(parseFloat((rng() * (85 - 65) + 65).toFixed(1)));
+      dataM2.push(parseFloat((rng() * (110 - 80) + 80).toFixed(1)));
+      dataM3.push(parseFloat((rng() * (75 - 55) + 55).toFixed(1)));
     }
-    
+
     if (barChartRef.current) {
       comparisonChart = new ApexCharts(barChartRef.current, {
         chart: { type: 'bar', height: 350, toolbar: { show: false }, animations: { enabled: true, dynamicAnimation: { speed: 1000 } } },
@@ -118,7 +109,7 @@ const MachineComparison: React.FC = () => {
       if (comparisonChart) {
         categories.shift();
         categories.push(Date.now());
-        
+
         dataM1.shift();
         dataM1.push(parseFloat((Math.random() * (85 - 65) + 65).toFixed(1)));
 
@@ -145,53 +136,39 @@ const MachineComparison: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton color="primary" />
-          </IonButtons>
-          <IonTitle>Machine Comparison</IonTitle>
-          <PdfDownloadControl
-            pageTitle="Machine Comparison"
-            selectedRange={selectedRange}
-            selectedRangeLabel={selectedRangeLabel}
-            onSelectRange={handleSelectRange}
-            contentRef={contentRef}
-            moduleType="comparison"
-            data={{
-              widgets: [
-                { title: 'Machine 1 Status', value: 'Normal', sub: 'Balanced load distribution', trendColor: '#4f46e5' },
-                { title: 'Peak Consumer', value: 'Machine 2', sub: '▲ 12% higher than avg', trendColor: '#ef4444' },
-                { title: 'Most Efficient', value: 'Machine 3', sub: 'Operating at optimal load', trendColor: '#f59e0b' }
+      <PageToolbar
+        title="Machine Comparison"
+        selectedRange={selectedRange}
+        selectedRangeLabel={selectedRangeLabel}
+        onSelectRange={handleSelectRange}
+        contentRef={contentRef}
+        moduleType="comparison"
+        data={{
+          widgets: [
+            { title: 'Machine 1 Status', value: 'Normal', sub: 'Balanced load distribution', trendColor: '#4f46e5' },
+            { title: 'Peak Consumer', value: 'Machine 2', sub: '+12% higher than avg', trendColor: '#ef4444' },
+            { title: 'Most Efficient', value: 'Machine 3', sub: 'Operating at optimal load', trendColor: '#f59e0b' }
+          ],
+          chartTitles: ['Power Demand Comparison'],
+          chartDatasets: [
+            {
+              type: 'bar',
+              series: [
+                { name: 'Machine 1 (kW)', data: [65, 68, 70, 67, 69, 72] },
+                { name: 'Machine 2 (kW)', data: [80, 85, 90, 88, 86, 95] },
+                { name: 'Machine 3 (kW)', data: [55, 58, 60, 57, 59, 62] }
               ],
-              chartTitles: ['Power Demand Comparison'],
-              chartDatasets: [
-                { 
-                  type: 'bar', 
-                  series: [
-                    { name: 'Machine 1 (kW)', data: [65, 68, 70, 67, 69, 72] },
-                    { name: 'Machine 2 (kW)', data: [80, 85, 90, 88, 86, 95] },
-                    { name: 'Machine 3 (kW)', data: [55, 58, 60, 57, 59, 62] }
-                  ],
-                  colors: ['#4f46e5', '#10b981', '#f59e0b'],
-                  categories: [Date.now() - 5000, Date.now() - 4000, Date.now() - 3000, Date.now() - 2000, Date.now() - 1000, Date.now()],
-                  yTitle: 'kW'
-                }
-              ]
-            }}
-          />
-          <NotificationBell />
-        </IonToolbar>
-      </IonHeader>
+              colors: ['#4f46e5', '#10b981', '#f59e0b'],
+              categories: [Date.now() - 5000, Date.now() - 4000, Date.now() - 3000, Date.now() - 2000, Date.now() - 1000, Date.now()],
+              yTitle: 'kW'
+            }
+          ]
+        }}
+      />
       <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
         <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
-          
           <div className="energy-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>System Analytics</h2>
-            {/* <button className="time-range-button" onClick={() => setModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px', cursor: 'pointer', boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }}>
-              <IonIcon icon={calendarOutline} style={{ color: '#64748b' }} />
-              <span style={{ fontWeight: 500, color: '#334155' }}>{selectedRangeLabel}</span>
-            </button> */}
           </div>
 
           <div className="energy-widgets">
@@ -203,7 +180,7 @@ const MachineComparison: React.FC = () => {
             <IonCard className="widget-card" style={{ borderTop: '4px solid #ef4444', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               <div className="widget-title" style={{ fontWeight: 600, color: '#ef4444' }}><IonIcon icon={barChartOutline} /> Peak Consumer</div>
               <div className="widget-value" style={{ margin: '10px 0', fontSize: '1.25rem', fontWeight: 700 }}>Machine 2</div>
-              <div className="widget-sub negative" style={{ color: '#ef4444', fontWeight: 500 }}>▲ 12% higher than avg</div>
+              <div className="widget-sub negative" style={{ color: '#ef4444', fontWeight: 500 }}>+12% higher than avg</div>
             </IonCard>
             <IonCard className="widget-card" style={{ borderTop: '4px solid #f59e0b', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
               <div className="widget-title" style={{ fontWeight: 600, color: '#f59e0b' }}><IonIcon icon={speedometerOutline} /> Most Efficient</div>
@@ -221,7 +198,6 @@ const MachineComparison: React.FC = () => {
               <div ref={barChartRef} style={{ padding: '1rem', minHeight: '350px' }}></div>
             </IonCard>
           </div>
-
         </div>
       </IonContent>
     </IonPage>
@@ -229,10 +205,3 @@ const MachineComparison: React.FC = () => {
 };
 
 export default MachineComparison;
-
-
-
-
-
-
-

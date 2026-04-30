@@ -1,20 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonCard,
-  IonIcon
-} from '@ionic/react';
+import { IonContent, IonPage, IonCard, IonIcon } from '@ionic/react';
 import { timerOutline, checkmarkCircleOutline, hardwareChipOutline } from 'ionicons/icons';
 import ApexCharts from 'apexcharts';
 import '../components/EnergyConsumption.css';
-import PdfDownloadControl from '../components/PdfDownloadControl';
-import NotificationBell from '../components/NotificationBell';
+import PageToolbar from '../components/PageToolbar';
 import { getTimeRangeTotalMinutes, makeSeededRandom, type CustomRange } from '../utils/timeRange';
 
 const OEEDashboard: React.FC = () => {
@@ -40,7 +29,6 @@ const OEEDashboard: React.FC = () => {
     const totalMinutes = getTimeRangeTotalMinutes(selectedRange, customRange);
     const rng = makeSeededRandom(`${selectedRange}|${customRange?.start ?? ''}|${customRange?.end ?? ''}`);
 
-    // Longer ranges look slightly more stable.
     const stability = Math.min(6, Math.log10(totalMinutes + 1) * 2);
     const clamp = (v: number) => Math.max(70, Math.min(99.9, v));
     const pick = (base: number, spread: number) => clamp(base + (rng() - 0.5) * spread + stability);
@@ -108,46 +96,36 @@ const OEEDashboard: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton color="primary" />
-          </IonButtons>
-          <IonTitle>Efficiency Analytics</IonTitle>
-          <PdfDownloadControl
-            pageTitle="Efficiency Analytics"
-            selectedRange={selectedRange}
-            selectedRangeLabel={selectedRangeLabel}
-            onSelectRange={handleSelectRange}
-            contentRef={contentRef}
-            fileName={(rangeLabel) => `Efficiency Analytics - ${rangeLabel}.pdf`}
-            moduleType="oee"
-            data={{
-              avgOee: metrics.avg.toFixed(1),
-              widgets: [
-                { title: 'Power Uptime', value: `${metrics.m1.toFixed(1)}%`, sub: 'Active vs Downtime', trendColor: '#3b82f6' },
-                { title: 'Load Efficiency', value: `${metrics.m2.toFixed(1)}%`, sub: 'Current vs Peak Load', trendColor: '#8b5cf6' },
-                { title: 'Power Quality', value: `${metrics.m3.toFixed(1)}%`, sub: 'Clean Power Accuracy', trendColor: '#10b981' }
-              ],
-              radialSeries: [
-                parseFloat(metrics.m1.toFixed(1)),
-                parseFloat(metrics.m2.toFixed(1)),
-                parseFloat(metrics.m3.toFixed(1))
-              ],
-              radialLabels: ['Machine 1', 'Machine 2', 'Machine 3'],
-              breakdownSeries: [
-                { name: 'Uptime', data: [98, 92, 99] },
-                { name: 'Load Efficiency', data: [88, 81, 95] },
-                { name: 'Power Quality', data: [92, 95, 91] }
-              ]
-            }}
-          />
-          <NotificationBell />
-        </IonToolbar>
-      </IonHeader>
+      <PageToolbar
+        title="Efficiency Analytics"
+        selectedRange={selectedRange}
+        selectedRangeLabel={selectedRangeLabel}
+        onSelectRange={handleSelectRange}
+        contentRef={contentRef}
+        fileName={(rangeLabel) => `Efficiency Analytics - ${rangeLabel}.pdf`}
+        moduleType="oee"
+        data={{
+          avgOee: metrics.avg.toFixed(1),
+          widgets: [
+            { title: 'Power Uptime', value: `${metrics.m1.toFixed(1)}%`, sub: 'Active vs Downtime', trendColor: '#3b82f6' },
+            { title: 'Load Efficiency', value: `${metrics.m2.toFixed(1)}%`, sub: 'Current vs Peak Load', trendColor: '#8b5cf6' },
+            { title: 'Power Quality', value: `${metrics.m3.toFixed(1)}%`, sub: 'Clean Power Accuracy', trendColor: '#10b981' }
+          ],
+          radialSeries: [
+            parseFloat(metrics.m1.toFixed(1)),
+            parseFloat(metrics.m2.toFixed(1)),
+            parseFloat(metrics.m3.toFixed(1))
+          ],
+          radialLabels: ['Machine 1', 'Machine 2', 'Machine 3'],
+          breakdownSeries: [
+            { name: 'Uptime', data: [98, 92, 99] },
+            { name: 'Load Efficiency', data: [88, 81, 95] },
+            { name: 'Power Quality', data: [92, 95, 91] }
+          ]
+        }}
+      />
       <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
         <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
-          
           <div className="energy-title-row">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>Overall Energy Efficiency (OEE)</h2>
           </div>
@@ -187,7 +165,6 @@ const OEEDashboard: React.FC = () => {
               <div ref={breakdownChartRef} style={{ padding: '1rem 0' }}></div>
             </IonCard> */}
           </div>
-
         </div>
       </IonContent>
     </IonPage>

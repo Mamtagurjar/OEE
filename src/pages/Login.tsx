@@ -1,9 +1,6 @@
 import {
   IonButton,
   IonContent,
-  IonInput,
-  IonItem,
-  IonLabel,
   IonNote,
   IonPage,
   IonRouterLink,
@@ -113,41 +110,53 @@ const Login: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} noValidate className="auth-form">
-              <IonItem className="input-item" lines="none">
-                <IonLabel position="stacked" className="input-label">Email</IonLabel>
-                <IonInput
-                  type="email"
-                  inputmode="email"
-                  autocomplete="email"
-                  placeholder="demo@gmail.com"
-                  value={loginData.email}
-                  onIonInput={(event) =>
-                    setField('email', event.detail.value ?? '')
-                  }
-                  onIonBlur={() => markTouched('email')}
-                  clearInput
-                />
-              </IonItem>
+              <div className="auth-field">
+                <label htmlFor="login-email" className="input-label">Email</label>
+                <div className="auth-field-control">
+                  <input
+                    id="login-email"
+                    className="auth-native-input"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="demo@gmail.com"
+                    value={loginData.email}
+                    onChange={(event) => setField('email', event.target.value)}
+                    onBlur={() => markTouched('email')}
+                  />
+                  {loginData.email ? (
+                    <button
+                      type="button"
+                      className="auth-clear-button"
+                      aria-label="Clear email"
+                      onClick={() => setField('email', '')}
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+              </div>
               {touched.email && errors.email ? (
                 <IonNote color="danger" className="inline-error">
                   {errors.email}
                 </IonNote>
               ) : null}
 
-              <IonItem className="input-item" lines="none">
-                <IonLabel position="stacked" className="input-label">Password</IonLabel>
-                <IonInput
-                  type="password"
-                  clearOnEdit={false}
-                  autocomplete="current-password"
-                  placeholder="Enter password"
-                  value={loginData.password}
-                  onIonInput={(event) =>
-                    setField('password', event.detail.value ?? '')
-                  }
-                  onIonBlur={() => markTouched('password')}
-                />
-              </IonItem>
+              <div className="auth-field">
+                <label htmlFor="login-password" className="input-label">Password</label>
+                <div className="auth-field-control">
+                  <input
+                    id="login-password"
+                    className="auth-native-input"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Enter password"
+                    value={loginData.password}
+                    onChange={(event) => setField('password', event.target.value)}
+                    onBlur={() => markTouched('password')}
+                  />
+                </div>
+              </div>
               {touched.password && errors.password ? (
                 <IonNote color="danger" className="inline-error">
                   {errors.password}

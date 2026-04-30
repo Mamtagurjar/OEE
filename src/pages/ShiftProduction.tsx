@@ -1,12 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
   IonCard,
   IonList,
   IonItem,
@@ -17,9 +12,8 @@ import {
 import { flashOutline, speedometerOutline, pulseOutline } from 'ionicons/icons';
 import '../components/EnergyConsumption.css';
 import '../components/CustomSelect.css';
+import PageToolbar from '../components/PageToolbar';
 import SearchableDropdown from '../components/SearchableDropdown';
-import PdfDownloadControl from '../components/PdfDownloadControl';
-import NotificationBell from '../components/NotificationBell';
 import { getTimeRangeTotalMinutes, makeSeededRandom, type CustomRange } from '../utils/timeRange';
 
 const ShiftProduction: React.FC = () => {
@@ -72,37 +66,27 @@ const ShiftProduction: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton color="primary" />
-          </IonButtons>
-          <IonTitle>Shift Summary</IonTitle>
-          <PdfDownloadControl
-            pageTitle="Shift Summary"
-            selectedRange={selectedRange}
-            selectedRangeLabel={selectedRangeLabel}
-            onSelectRange={handleSelectRange}
-            contentRef={contentRef}
-            fileName={(rangeLabel) => `Shift Summary - ${rangeLabel}.pdf`}
-            moduleType="production"
-            data={{
-              widgets: [
-                { title: 'Total Energy', value: `${metrics.totalEnergy.toFixed(1)} kWh`, sub: '+6.2% vs last shift', trendColor: '#4f46e5' },
-                { title: 'Peak Demand', value: `${metrics.peakDemand.toFixed(1)} kW`, sub: 'Recorded at 14:20', trendColor: '#ef4444' },
-                { title: 'Avg Power Factor', value: metrics.avgPf.toFixed(2), sub: 'Within target range', trendColor: '#10b981' }
-              ],
-              progressItems: [
-                { label: 'Machine 1', used: Math.round(metrics.m1.used), budget: metrics.m1.budget, color: '#4f46e5' },
-                { label: 'Machine 2', used: Math.round(metrics.m2.used), budget: metrics.m2.budget, color: '#10b981' },
-                { label: 'Machine 3', used: Math.round(metrics.m3.used), budget: metrics.m3.budget, color: '#f59e0b' }
-              ]
-            }}
-          />
-          <NotificationBell />
-        </IonToolbar>
-      </IonHeader>
-      
+      <PageToolbar
+        title="Shift Summary"
+        selectedRange={selectedRange}
+        selectedRangeLabel={selectedRangeLabel}
+        onSelectRange={handleSelectRange}
+        contentRef={contentRef}
+        fileName={(rangeLabel) => `Shift Summary - ${rangeLabel}.pdf`}
+        moduleType="production"
+        data={{
+          widgets: [
+            { title: 'Total Energy', value: `${metrics.totalEnergy.toFixed(1)} kWh`, sub: '+6.2% vs last shift', trendColor: '#4f46e5' },
+            { title: 'Peak Demand', value: `${metrics.peakDemand.toFixed(1)} kW`, sub: 'Recorded at 14:20', trendColor: '#ef4444' },
+            { title: 'Avg Power Factor', value: metrics.avgPf.toFixed(2), sub: 'Within target range', trendColor: '#10b981' }
+          ],
+          progressItems: [
+            { label: 'Machine 1', used: Math.round(metrics.m1.used), budget: metrics.m1.budget, color: '#4f46e5' },
+            { label: 'Machine 2', used: Math.round(metrics.m2.used), budget: metrics.m2.budget, color: '#10b981' },
+            { label: 'Machine 3', used: Math.round(metrics.m3.used), budget: metrics.m3.budget, color: '#f59e0b' }
+          ]
+        }}
+      />
       <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
         <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
           <div className="energy-title-row">

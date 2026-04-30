@@ -1,12 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  IonButtons,
   IonContent,
-  IonHeader,
-  IonMenuButton,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonCard,
   IonIcon
 } from '@ionic/react';
@@ -14,9 +9,8 @@ import { flashOutline, speedometerOutline, pulseOutline } from 'ionicons/icons';
 import ApexCharts from 'apexcharts';
 import '../components/EnergyConsumption.css';
 import '../components/CustomSelect.css';
+import PageToolbar from '../components/PageToolbar';
 import SearchableDropdown from '../components/SearchableDropdown';
-import PdfDownloadControl from '../components/PdfDownloadControl';
-import NotificationBell from '../components/NotificationBell';
 import { makeSeededRandom, type CustomRange } from '../utils/timeRange';
 import { triggerAlert } from '../utils/notifications';
 
@@ -97,7 +91,7 @@ const PowerMonitoring: React.FC = () => {
     let voltageChart: ApexCharts | null = null;
 
     const points = ['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'].includes(selectedRange) ? 7 : 12;
-    const tickMs = 1000; // Reduced to 1 second for faster responsiveness
+    const tickMs = 1000;
 
     const categories: number[] = [];
     const vM1: number[] = [];
@@ -140,7 +134,7 @@ const PowerMonitoring: React.FC = () => {
           height: 350,
           animations: { enabled: true, dynamicAnimation: { speed: 500 } }
         },
-        series: series,
+        series,
         colors: chartColors,
         plotOptions: {
           radialBar: {
@@ -167,7 +161,7 @@ const PowerMonitoring: React.FC = () => {
             }
           }
         },
-        labels: labels,
+        labels,
       });
       pfChart.render();
     }
@@ -204,7 +198,7 @@ const PowerMonitoring: React.FC = () => {
           zoom: { enabled: false }
         },
         stroke: { curve: 'smooth', width: 2 },
-        series: series,
+        series,
         colors: chartColors,
         xaxis: {
           type: 'datetime',
@@ -264,18 +258,17 @@ const PowerMonitoring: React.FC = () => {
       setM3Current(i3);
       setM3Freq(f3);
 
-      // Alert Trigger Logic
       const machineDataArr = [
         { id: 'm1', name: 'Machine 1', v: v1, i: i1, f: f1 },
         { id: 'm2', name: 'Machine 2', v: v2, i: i2, f: f2 },
         { id: 'm3', name: 'Machine 3', v: v3, i: i3, f: f3 }
       ];
 
-      machineDataArr.forEach(m => {
+      machineDataArr.forEach((m) => {
         const t = thresholds[m.id as MachineThresholdKey];
-        if (m.v > t.v) triggerAlert('High Voltage Alert', `⚠️ ${m.name} Voltage (${m.v.toFixed(1)}V) exceeded threshold (${t.v}V)`);
-        if (m.i > t.i) triggerAlert('Current Overload Alert', `⚠️ ${m.name} Current (${m.i.toFixed(1)}A) exceeded threshold (${t.i}A)`);
-        if (m.f > t.f) triggerAlert('Frequency Deviation Alert', `⚠️ ${m.name} Frequency (${m.f.toFixed(2)}Hz) exceeded threshold (${t.f}Hz)`);
+        if (m.v > t.v) triggerAlert('High Voltage Alert', `Warning: ${m.name} voltage (${m.v.toFixed(1)}V) exceeded threshold (${t.v}V)`);
+        if (m.i > t.i) triggerAlert('Current Overload Alert', `Warning: ${m.name} current (${m.i.toFixed(1)}A) exceeded threshold (${t.i}A)`);
+        if (m.f > t.f) triggerAlert('Frequency Deviation Alert', `Warning: ${m.name} frequency (${m.f.toFixed(2)}Hz) exceeded threshold (${t.f}Hz)`);
       });
 
       categories.shift();
@@ -313,55 +306,46 @@ const PowerMonitoring: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton color="primary" />
-          </IonButtons>
-          <IonTitle>Power Monitoring</IonTitle>
-          <PdfDownloadControl
-            pageTitle="Power Monitoring"
-            selectedRange={selectedRange}
-            selectedRangeLabel={selectedRangeLabel}
-            onSelectRange={handleSelectRange}
-            contentRef={contentRef}
-            fileName={(rangeLabel) => `Power Monitoring - ${rangeLabel}.pdf`}
-            moduleType="power"
-            data={{
-              widgets: [
-                { title: 'Machine 1 Voltage', value: `${m1Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#4f46e5' },
-                { title: 'Machine 1 Current', value: `${m1Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#4f46e5' },
-                { title: 'Machine 1 Frequency', value: `${m1Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#4f46e5' },
-                { title: 'Machine 2 Voltage', value: `${m2Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#10b981' },
-                { title: 'Machine 2 Current', value: `${m2Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#10b981' },
-                { title: 'Machine 2 Frequency', value: `${m2Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#10b981' },
-                { title: 'Machine 3 Voltage', value: `${m3Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#f59e0b' },
-                { title: 'Machine 3 Current', value: `${m3Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#f59e0b' },
-                { title: 'Machine 3 Frequency', value: `${m3Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#f59e0b' }
+      <PageToolbar
+        title="Power Monitoring"
+        selectedRange={selectedRange}
+        selectedRangeLabel={selectedRangeLabel}
+        onSelectRange={handleSelectRange}
+        contentRef={contentRef}
+        fileName={(rangeLabel) => `Power Monitoring - ${rangeLabel}.pdf`}
+        moduleType="power"
+        data={{
+          widgets: [
+            { title: 'Machine 1 Voltage', value: `${m1Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#4f46e5' },
+            { title: 'Machine 1 Current', value: `${m1Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#4f46e5' },
+            { title: 'Machine 1 Frequency', value: `${m1Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#4f46e5' },
+            { title: 'Machine 2 Voltage', value: `${m2Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#10b981' },
+            { title: 'Machine 2 Current', value: `${m2Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#10b981' },
+            { title: 'Machine 2 Frequency', value: `${m2Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#10b981' },
+            { title: 'Machine 3 Voltage', value: `${m3Voltage.toFixed(1)} V`, sub: 'Line voltage snapshot', trendColor: '#f59e0b' },
+            { title: 'Machine 3 Current', value: `${m3Current.toFixed(1)} A`, sub: 'Load draw monitoring', trendColor: '#f59e0b' },
+            { title: 'Machine 3 Frequency', value: `${m3Freq.toFixed(2)} Hz`, sub: 'Grid stability check', trendColor: '#f59e0b' }
+          ],
+          chartTitles: ['Power Factor by Machine', 'Voltage Trend (Live)'],
+          chartDatasets: [
+            {
+              type: 'radialBar',
+              series: pfRef.current.map((pf) => parseFloat((pf * 100).toFixed(1))),
+              radialLabels: ['Machine 1', 'Machine 2', 'Machine 3']
+            },
+            {
+              type: 'area',
+              series: [
+                { name: 'Machine 1', data: [225, 240, 255, 230, 245, 250] },
+                { name: 'Machine 2', data: [215, 230, 245, 220, 235, 240] },
+                { name: 'Machine 3', data: [235, 250, 265, 240, 255, 260] }
               ],
-              chartTitles: ['Power Factor by Machine', 'Voltage Trend (Live)'],
-              chartDatasets: [
-                {
-                  type: 'radialBar',
-                  series: pfRef.current.map(pf => parseFloat((pf * 100).toFixed(1))),
-                  radialLabels: ['Machine 1', 'Machine 2', 'Machine 3']
-                },
-                {
-                  type: 'area',
-                  series: [
-                    { name: 'Machine 1', data: [225, 240, 255, 230, 245, 250] },
-                    { name: 'Machine 2', data: [215, 230, 245, 220, 235, 240] },
-                    { name: 'Machine 3', data: [235, 250, 265, 240, 255, 260] }
-                  ],
-                  colors: ['#4f46e5', '#10b981', '#f59e0b'],
-                  categories: [Date.now() - 5000, Date.now() - 4000, Date.now() - 3000, Date.now() - 2000, Date.now() - 1000, Date.now()]
-                }
-              ]
-            }}
-          />
-          <NotificationBell />
-        </IonToolbar>
-      </IonHeader>
+              colors: ['#4f46e5', '#10b981', '#f59e0b'],
+              categories: [Date.now() - 5000, Date.now() - 4000, Date.now() - 3000, Date.now() - 2000, Date.now() - 1000, Date.now()]
+            }
+          ]
+        }}
+      />
       <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
         <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
           <div className="energy-title-row">
@@ -465,7 +449,6 @@ const PowerMonitoring: React.FC = () => {
               <div ref={chartRef2} style={{ padding: '1rem 0' }}></div>
             </IonCard>
           </div>
-
         </div>
       </IonContent>
     </IonPage>

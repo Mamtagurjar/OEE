@@ -3,7 +3,6 @@ import {
   IonButtons,
   IonContent,
   IonHeader,
-  IonMenuButton,
   IonPage,
   IonTitle,
   IonToolbar,
@@ -17,8 +16,7 @@ import {
 import { useEffect } from 'react';
 import { warningOutline, flashOutline, alertCircleOutline, checkmarkCircleOutline, closeOutline, settingsOutline } from 'ionicons/icons';
 import '../components/EnergyConsumption.css';
-import PdfDownloadControl from '../components/PdfDownloadControl';
-import NotificationBell from '../components/NotificationBell';
+import PageToolbar from '../components/PageToolbar';
 import { getTimeRangeTotalMinutes, makeSeededRandom, type CustomRange } from '../utils/timeRange';
 
 export type CustomAlertItem = {
@@ -47,7 +45,6 @@ const SystemAlerts: React.FC = () => {
     setCustomRange(range === 'custom' && selectedCustomRange ? selectedCustomRange : null);
   };
 
-  // Machine Alert Thresholds State
   const [alertMachine, setAlertMachine] = useState('m1');
   const [thresholds, setThresholds] = useState(() => {
     const saved = localStorage.getItem('power_thresholds');
@@ -121,40 +118,30 @@ const SystemAlerts: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonMenuButton color="primary" />
-          </IonButtons>
-          <IonTitle>System Alerts</IonTitle>
-          <PdfDownloadControl
-            pageTitle="System Alerts"
-            selectedRange={selectedRange}
-            selectedRangeLabel={selectedRangeLabel}
-            onSelectRange={handleSelectRange}
-            contentRef={contentRef}
-            fileName={(rangeLabel) => `System Alerts - ${rangeLabel}.pdf`}
-            moduleType="alerts"
-            data={{
-              widgets: [
-                { title: 'Critical Needs', value: criticalCount, sub: 'Action required immediately', trendColor: '#ef4444' },
-                { title: 'Warnings', value: warningCount, sub: 'Monitor closely', trendColor: '#f59e0b' },
-                { title: 'System Status', value: `${statusPct}%`, sub: 'Network health nominal', trendColor: '#10b981' }
-              ],
-              alerts: alerts.map(a => ({
-                title: `${a.machine} - ${a.message}`,
-                message: `Incident type: ${a.type}`,
-                time: a.time,
-                color: a.type === 'critical' ? '#ef4444' : a.type === 'warning' ? '#f59e0b' : '#3b82f6'
-              }))
-            }}
-          />
-          <NotificationBell />
-        </IonToolbar>
-      </IonHeader>
+      <PageToolbar
+        title="System Alerts"
+        selectedRange={selectedRange}
+        selectedRangeLabel={selectedRangeLabel}
+        onSelectRange={handleSelectRange}
+        contentRef={contentRef}
+        fileName={(rangeLabel) => `System Alerts - ${rangeLabel}.pdf`}
+        moduleType="alerts"
+        data={{
+          widgets: [
+            { title: 'Critical Needs', value: criticalCount, sub: 'Action required immediately', trendColor: '#ef4444' },
+            { title: 'Warnings', value: warningCount, sub: 'Monitor closely', trendColor: '#f59e0b' },
+            { title: 'System Status', value: `${statusPct}%`, sub: 'Network health nominal', trendColor: '#10b981' }
+          ],
+          alerts: alerts.map((a) => ({
+            title: `${a.machine} - ${a.message}`,
+            message: `Incident type: ${a.type}`,
+            time: a.time,
+            color: a.type === 'critical' ? '#ef4444' : a.type === 'warning' ? '#f59e0b' : '#3b82f6'
+          }))
+        }}
+      />
       <IonContent className="ion-padding" style={{ '--background': '#f8fafc' }}>
         <div ref={contentRef} className="energy-inner" style={{ paddingTop: '2.5rem' }}>
-          
           <div className="energy-title-row" style={{ justifyContent: 'flex-start' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>Anomaly Detection</h2>
           </div>
@@ -180,10 +167,10 @@ const SystemAlerts: React.FC = () => {
           <div style={{ marginTop: '2.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>System Anomaly Monitoring</h3>
-              <IonButton 
-                size="small" 
-                fill="solid" 
-                shape="round" 
+              <IonButton
+                size="small"
+                fill="solid"
+                shape="round"
                 color="primary"
                 onClick={() => setIsThresholdModalOpen(true)}
                 style={{ '--box-shadow': '0 4px 10px rgba(79, 70, 229, 0.2)', fontWeight: 600 }}
@@ -199,11 +186,11 @@ const SystemAlerts: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {alerts.map((alert) => (
                 <IonCard key={alert.id} className="widget-card" style={{ margin: 0, padding: '1rem 1.5rem', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ 
-                      padding: '0.75rem', 
-                      borderRadius: '50%', 
-                      backgroundColor: alert.type === 'critical' ? '#fee2e2' : alert.type === 'warning' ? '#fef3c7' : '#e0e7ff',
-                      color: alert.type === 'critical' ? '#ef4444' : alert.type === 'warning' ? '#f59e0b' : '#4f46e5'
+                  <div style={{
+                    padding: '0.75rem',
+                    borderRadius: '50%',
+                    backgroundColor: alert.type === 'critical' ? '#fee2e2' : alert.type === 'warning' ? '#fef3c7' : '#e0e7ff',
+                    color: alert.type === 'critical' ? '#ef4444' : alert.type === 'warning' ? '#f59e0b' : '#4f46e5'
                   }}>
                     <IonIcon icon={alert.icon} size="large" />
                   </div>
@@ -220,13 +207,12 @@ const SystemAlerts: React.FC = () => {
               ))}
             </div>
           </div>
-
         </div>
 
-        <IonModal 
-          isOpen={isThresholdModalOpen} 
-          onDidDismiss={() => setIsThresholdModalOpen(false)} 
-          breakpoints={[0, 0.85, 1]} 
+        <IonModal
+          isOpen={isThresholdModalOpen}
+          onDidDismiss={() => setIsThresholdModalOpen(false)}
+          breakpoints={[0, 0.85, 1]}
           initialBreakpoint={0.85}
           handleBehavior="cycle"
         >
@@ -250,17 +236,17 @@ const SystemAlerts: React.FC = () => {
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', marginBottom: '8px' }}>Machine Selector</label>
                 <IonSelect
                   value={alertMachine}
-                  onIonChange={e => setAlertMachine(e.detail.value)}
+                  onIonChange={(e) => setAlertMachine(e.detail.value)}
                   interface="popover"
                   interfaceOptions={{
                     cssClass: 'machine-selector-popover'
                   }}
                   style={{
                     '--background': '#ffffff',
-                    'border': '1px solid #e2e8f0',
+                    border: '1px solid #e2e8f0',
                     'border-radius': '10px',
-                    'padding': '4px 12px',
-                    'width': '100%',
+                    padding: '4px 12px',
+                    width: '100%',
                     'font-weight': '600'
                   }}
                 >
@@ -276,7 +262,7 @@ const SystemAlerts: React.FC = () => {
                   <input
                     type="number"
                     value={inputV}
-                    onChange={e => setInputV(e.target.value)}
+                    onChange={(e) => setInputV(e.target.value)}
                     style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
                   />
                 </div>
@@ -285,7 +271,7 @@ const SystemAlerts: React.FC = () => {
                   <input
                     type="number"
                     value={inputI}
-                    onChange={e => setInputI(e.target.value)}
+                    onChange={(e) => setInputI(e.target.value)}
                     style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
                   />
                 </div>
@@ -296,16 +282,16 @@ const SystemAlerts: React.FC = () => {
                 <input
                   type="number"
                   value={inputF}
-                  onChange={e => setInputF(e.target.value)}
+                  onChange={(e) => setInputF(e.target.value)}
                   style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
                 />
               </div>
 
               <div style={{ marginTop: '1rem', paddingBottom: '2.5rem' }}>
-                <IonButton 
-                  expand="block" 
-                  shape="round" 
-                  color="primary" 
+                <IonButton
+                  expand="block"
+                  shape="round"
+                  color="primary"
                   onClick={() => {
                     handleUpdateThresholds();
                     setIsThresholdModalOpen(false);
