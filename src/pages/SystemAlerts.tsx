@@ -9,19 +9,13 @@ import {
   IonToolbar,
   IonCard,
   IonIcon,
-  IonFab,
-  IonFabButton,
   IonModal,
-  IonInput,
-  IonTextarea,
-  IonLabel,
   IonButton,
   IonSelect,
   IonSelectOption,
-  IonItem
 } from '@ionic/react';
 import { useEffect } from 'react';
-import { warningOutline, flashOutline, alertCircleOutline, checkmarkCircleOutline, addOutline, closeOutline, settingsOutline } from 'ionicons/icons';
+import { warningOutline, flashOutline, alertCircleOutline, checkmarkCircleOutline, closeOutline, settingsOutline } from 'ionicons/icons';
 import '../components/EnergyConsumption.css';
 import PdfDownloadControl from '../components/PdfDownloadControl';
 import NotificationBell from '../components/NotificationBell';

@@ -3,13 +3,67 @@ import ApexCharts, { ApexOptions } from "apexcharts";
 
 export type ModuleType = 'energy' | 'oee' | 'maintenance' | 'comparison' | 'production' | 'alerts' | 'power';
 
+type ChartSeries = {
+  name: string;
+  data: number[];
+};
+
+type PdfWidget = {
+  title: string;
+  value: string | number;
+  sub: string;
+  trendColor?: string;
+};
+
+type PdfChartDataset = {
+  type?: 'line' | 'bar' | 'area' | 'radialBar';
+  series: number[] | ChartSeries[];
+  colors?: string[];
+  categories?: number[];
+  yTitle?: string;
+  radialLabels?: string[];
+};
+
+type PdfLogItem = {
+  name: string;
+  status: string;
+  statusColor?: string;
+  lastCheck: string;
+};
+
+type PdfAlertItem = {
+  title: string;
+  message: string;
+  time: string;
+  color?: string;
+};
+
+type PdfProgressItem = {
+  label: string;
+  used: number;
+  budget: number;
+  color?: string;
+};
+
+export interface PdfReportData {
+  widgets?: PdfWidget[];
+  chartTitles?: string[];
+  chartDatasets?: PdfChartDataset[];
+  radialSeries?: number[];
+  radialLabels?: string[];
+  breakdownSeries?: ChartSeries[];
+  progressItems?: PdfProgressItem[];
+  alerts?: PdfAlertItem[];
+  logs?: PdfLogItem[];
+  avgOee?: string | number;
+}
+
 interface PdfReportTemplateProps {
   pageTitle: string;
   selectedRangeLabel: string;
   moduleType: ModuleType;
-  data: any; // Dynamic data from the actual dashboard
+  data: PdfReportData;
   containerRef: React.RefObject<HTMLDivElement | null>;
-  selectedRange: string;
 }
 
 const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
@@ -18,7 +72,6 @@ const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
   moduleType,
   data,
   containerRef,
-  selectedRange,
 }) => {
   const chartNodes = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -27,8 +80,8 @@ const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
 
     // Logic to render charts based on module type and data
     if (moduleType === 'energy' || moduleType === 'power' || moduleType === 'comparison') {
-      const datasets = data.chartDatasets || [];
-      datasets.forEach((ds: any, i: number) => {
+      const datasets = data.chartDatasets ?? [];
+      datasets.forEach((ds, i) => {
         const node = chartNodes.current[i];
         if (!node) return;
 
@@ -95,7 +148,7 @@ const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
 
   const renderWidgets = () => (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", marginBottom: "40px" }}>
-      {(data.widgets || []).map((w: any, i: number) => (
+      {(data.widgets ?? []).map((w, i) => (
         <div key={i} style={{ padding: "24px", borderRadius: "16px", border: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
           <div style={{ fontSize: "13px", fontWeight: 700, color: "#64748b", marginBottom: "8px", textTransform: "uppercase" }}>{w.title}</div>
           <div style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a" }}>{w.value}</div>
@@ -112,7 +165,7 @@ const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#1e293b" }}>Machine Health Status</h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-              {(data.logs || []).map((m: any, i: number) => (
+              {(data.logs ?? []).map((m, i) => (
                 <div key={i} style={{ padding: "20px", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
                   <div style={{ fontWeight: 800, fontSize: "18px", marginBottom: "12px" }}>{m.name}</div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", marginBottom: "8px" }}>
@@ -132,7 +185,7 @@ const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
             <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#1e293b" }}>Incident Activity Log</h2>
-            {(data.alerts || []).map((a: any, i: number) => (
+            {(data.alerts ?? []).map((a, i) => (
               <div key={i} style={{ padding: "18px", borderRadius: "12px", borderLeft: `6px solid ${a.color || '#ef4444'}`, backgroundColor: "#fef2f2", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ fontWeight: 800, color: "#1e293b", fontSize: "16px" }}>{a.title}</div>
@@ -147,7 +200,7 @@ const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
             <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#1e293b" }}>Shift Budget Utilization</h2>
-            {(data.progressItems || []).map((p: any, i: number) => (
+            {(data.progressItems ?? []).map((p, i) => (
               <div key={i} style={{ padding: "20px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
                   <span style={{ fontWeight: 800, fontSize: "16px" }}>{p.label}</span>
@@ -178,7 +231,7 @@ const PdfReportTemplate: React.FC<PdfReportTemplateProps> = ({
       default:
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-            {(data.chartDatasets || []).map((_: any, i: number) => (
+            {(data.chartDatasets ?? []).map((_, i) => (
               <div key={i} style={{ padding: "30px", borderRadius: "20px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
                 <h3 style={{ fontSize: "20px", fontWeight: 800, marginBottom: "20px", color: "#1e293b" }}>{data.chartTitles ? data.chartTitles[i] : `Analysis View ${i + 1}`}</h3>
                 <div ref={el => { chartNodes.current[i] = el; }} style={{ width: "100%", height: "300px" }} />

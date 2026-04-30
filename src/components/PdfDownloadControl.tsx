@@ -3,7 +3,10 @@ import { IonButton, IonButtons, IonIcon, IonLoading } from '@ionic/react';
 import { downloadOutline } from 'ionicons/icons';
 
 import { exportElementToPdf, waitForPaint } from '../utils/pdfExport';
-import PdfReportTemplate, { ModuleType } from './PdfReportTemplate';
+import PdfReportTemplate, {
+  ModuleType,
+  type PdfReportData,
+} from './PdfReportTemplate';
 
 type CustomRange = { start: string; end: string };
 
@@ -16,7 +19,7 @@ type PdfDownloadControlProps = {
   contentRef: React.RefObject<HTMLElement | null>;
   fileName?: (rangeLabel: string, rangeValue: string) => string;
   moduleType?: ModuleType;
-  data?: any; // Live data from the caller
+  data?: PdfReportData;
 };
 
 const sanitizeFileName = (name: string): string =>
@@ -29,7 +32,6 @@ const PdfDownloadControl: React.FC<PdfDownloadControlProps> = ({
   pageTitle,
   selectedRange,
   selectedRangeLabel,
-  contentRef,
   fileName,
   moduleType = 'energy',
   data = {},
@@ -98,7 +100,6 @@ const PdfDownloadControl: React.FC<PdfDownloadControlProps> = ({
             selectedRangeLabel={selectedRangeLabel}
             moduleType={moduleType}
             data={data}
-            selectedRange={selectedRange}
           />
         )}
       </div>

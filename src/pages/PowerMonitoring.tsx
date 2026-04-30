@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   IonButtons,
   IonContent,
@@ -17,8 +17,38 @@ import '../components/CustomSelect.css';
 import SearchableDropdown from '../components/SearchableDropdown';
 import PdfDownloadControl from '../components/PdfDownloadControl';
 import NotificationBell from '../components/NotificationBell';
-import { getTimeRangeTotalMinutes, makeSeededRandom, type CustomRange } from '../utils/timeRange';
+import { makeSeededRandom, type CustomRange } from '../utils/timeRange';
 import { triggerAlert } from '../utils/notifications';
+
+type MachineThresholdKey = 'm1' | 'm2' | 'm3';
+
+type MachineThresholds = Record<
+  MachineThresholdKey,
+  {
+    v: number;
+    i: number;
+    f: number;
+  }
+>;
+
+const DEFAULT_THRESHOLDS: MachineThresholds = {
+  m1: { v: 300, i: 50, f: 50 },
+  m2: { v: 300, i: 50, f: 50 },
+  m3: { v: 300, i: 50, f: 50 },
+};
+
+const getStoredPowerThresholds = (): MachineThresholds => {
+  const saved = localStorage.getItem('power_thresholds');
+  if (!saved) {
+    return DEFAULT_THRESHOLDS;
+  }
+
+  try {
+    return JSON.parse(saved) as MachineThresholds;
+  } catch {
+    return DEFAULT_THRESHOLDS;
+  }
+};
 
 const PowerMonitoring: React.FC = () => {
   const chartRef1 = useRef<HTMLDivElement | null>(null);
@@ -50,35 +80,7 @@ const PowerMonitoring: React.FC = () => {
     { value: 'm3', label: 'Machine 3' },
   ];
 
-  // Custom Alerts State
-  const [alertMachine, setAlertMachine] = useState('m1');
-  const [thresholds, setThresholds] = useState(() => {
-    const saved = localStorage.getItem('power_thresholds');
-    return saved ? JSON.parse(saved) : {
-      m1: { v: 300, i: 50, f: 50 },
-      m2: { v: 300, i: 50, f: 50 },
-      m3: { v: 300, i: 50, f: 50 }
-    };
-  });
-
-  const [inputV, setInputV] = useState(thresholds[alertMachine].v);
-  const [inputI, setInputI] = useState(thresholds[alertMachine].i);
-  const [inputF, setInputF] = useState(thresholds[alertMachine].f);
-
-  useEffect(() => {
-    setInputV(thresholds[alertMachine].v);
-    setInputI(thresholds[alertMachine].i);
-    setInputF(thresholds[alertMachine].f);
-  }, [alertMachine, thresholds]);
-
-  const handleUpdateThresholds = () => {
-    const updated = {
-      ...thresholds,
-      [alertMachine]: { v: Number(inputV), i: Number(inputI), f: Number(inputF) }
-    };
-    setThresholds(updated);
-    localStorage.setItem('power_thresholds', JSON.stringify(updated));
-  };
+  const thresholds = useMemo(getStoredPowerThresholds, []);
 
   const handleSelectRange = (
     range: string,
@@ -94,9 +96,7 @@ const PowerMonitoring: React.FC = () => {
     let pfChart: ApexCharts | null = null;
     let voltageChart: ApexCharts | null = null;
 
-    const totalMinutes = getTimeRangeTotalMinutes(selectedRange, customRange);
     const points = ['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'].includes(selectedRange) ? 7 : 12;
-    const stepMs = Math.max(3000, Math.round((totalMinutes * 60000) / Math.max(1, points - 1)));
     const tickMs = 1000; // Reduced to 1 second for faster responsiveness
 
     const categories: number[] = [];
@@ -272,7 +272,7 @@ const PowerMonitoring: React.FC = () => {
       ];
 
       machineDataArr.forEach(m => {
-        const t = thresholds[m.id as keyof typeof thresholds];
+        const t = thresholds[m.id as MachineThresholdKey];
         if (m.v > t.v) triggerAlert('High Voltage Alert', `⚠️ ${m.name} Voltage (${m.v.toFixed(1)}V) exceeded threshold (${t.v}V)`);
         if (m.i > t.i) triggerAlert('Current Overload Alert', `⚠️ ${m.name} Current (${m.i.toFixed(1)}A) exceeded threshold (${t.i}A)`);
         if (m.f > t.f) triggerAlert('Frequency Deviation Alert', `⚠️ ${m.name} Frequency (${m.f.toFixed(2)}Hz) exceeded threshold (${t.f}Hz)`);
@@ -309,7 +309,7 @@ const PowerMonitoring: React.FC = () => {
       pfChart?.destroy();
       voltageChart?.destroy();
     };
-  }, [selectedRange, customRange, selectedMachine]);
+  }, [selectedRange, customRange, selectedMachine, thresholds]);
 
   return (
     <IonPage>

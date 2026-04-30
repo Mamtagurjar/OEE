@@ -34,7 +34,9 @@ export const getAllNotifications = (): NotificationItem[] => {
   try {
     const raw = localStorage.getItem(DYNAMIC_STORAGE_KEY);
     if (raw) dynamic = JSON.parse(raw);
-  } catch {}
+  } catch {
+    dynamic = [];
+  }
 
   const now = getNow();
   const staticItems = [
@@ -77,7 +79,7 @@ export const setReadIds = (ids: Set<string>): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(ids)));
   } catch {
-    // Ignore storage errors (private mode, quotas, etc)
+    return;
   }
 };
 
